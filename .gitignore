@@ -1,0 +1,32 @@
+# Dependencies and package-manager caches
+node_modules/
+.pnpm-store/
+
+# Build artifacts and tool caches
+typescript/deno.lock
+purescript/.spago/
+purescript/output/
+koka/.koka/
+coverage/
+.cache/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+*.swo
+*~
+
+# Editors and IDEs
+.vscode/
+.idea/
+*.code-workspace
+
+# Operating-system metadata
+.DS_Store
+Thumbs.db

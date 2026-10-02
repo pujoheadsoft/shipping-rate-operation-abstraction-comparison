@@ -1,0 +1,18 @@
+package:
+  name: shipping-rate-effects-comparison-purescript
+  dependencies:
+    - arrays
+    - console
+    - effect
+    - partial
+    - prelude
+    - transformers
+  test:
+    main: Test.Main
+    dependencies:
+      - assert
+      - pmock
+workspace:
+  packageSet:
+    registry: 81.1.0
+  extraPackages: {}
