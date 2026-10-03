@@ -14,7 +14,9 @@ pub fun test-get-shipping-rates() : ()
   val expected = Shipping-rates(Non-empty(Shipping-rate("配送業者X", 100), []))
 
   val actual =
-    with fun fetch-shipping-rates(s) Ok(expected)
+    with fun fetch-shipping-rates(s)
+      assert-equals("Portに指定した荷物が渡される", shipment, s)
+      Ok(expected)
     get-shipping-rates(shipment) 
 
   assert-equals("荷物に対しての送料をすべて取得できる", Ok(expected), actual)
@@ -23,7 +25,9 @@ pub fun test-fail-get-shipping-rates() : ()
   val shipment = Shipment("111-1111", 10)
 
   val actual =
-    with fun fetch-shipping-rates(s) Error(FetchShippingRatesFailed)
+    with fun fetch-shipping-rates(s)
+      assert-equals("取得失敗時にもPortに指定した荷物が渡される", shipment, s)
+      Error(FetchShippingRatesFailed)
     get-shipping-rates(shipment)
 
   assert-equals(
