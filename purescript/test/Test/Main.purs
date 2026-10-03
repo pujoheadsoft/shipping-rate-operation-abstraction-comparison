@@ -3,14 +3,12 @@ module Test.Main (main) where
 import Prelude
 
 import Effect (Effect)
-import Hello (hello)
-import Test.Assert (assertEqual)
-import Test.UseCase.GetShippingRates (testGetShippingRates)
+import Test.Gateway.ShippingRatesGateway as ShippingRatesGateway
+import Test.Spec.Reporter.Console (consoleReporter)
+import Test.Spec.Runner.Node (runSpecAndExitProcess)
+import Test.UseCase.GetShippingRates as GetShippingRates
 
 main :: Effect Unit
-main = do
-  assertEqual
-    { actual: hello
-    , expected: "Hello, world!"
-    }
-  testGetShippingRates
+main = runSpecAndExitProcess [ consoleReporter ] do
+  GetShippingRates.spec
+  ShippingRatesGateway.spec

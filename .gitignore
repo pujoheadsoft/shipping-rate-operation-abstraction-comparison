@@ -5,6 +5,8 @@ node_modules/
 # Build artifacts and tool caches
 typescript/deno.lock
 purescript/.spago/
+purescript/.psc-ide-port
+purescript/.spec-results
 purescript/output/
 koka/.koka/
 coverage/

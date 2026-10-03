@@ -1,17 +1,23 @@
 package:
   name: shipping-rate-effects-comparison-purescript
   dependencies:
+    - aff
     - arrays
+    - bifunctors
     - console
     - effect
-    - partial
+    - either
+    - foldable-traversable
+    - parallel
     - prelude
     - transformers
   test:
     main: Test.Main
     dependencies:
-      - assert
+      - exceptions
       - pmock
+      - spec
+      - spec-node
 workspace:
   packageSet:
     registry: 81.1.0
