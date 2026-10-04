@@ -1,7 +1,5 @@
 import type { ShippingRate } from "./shipping_rate.ts";
 
-type NonEmptyArray<T> = readonly [T, ...T[]];
+export type NonEmptyArray<A> = readonly [A, ...A[]];
 
-export class ShippingRates {
-  constructor(readonly values: NonEmptyArray<ShippingRate>) {}
-}
+export type ShippingRates = NonEmptyArray<ShippingRate>;

@@ -8,8 +8,8 @@ import Prelude
 import Control.Monad.Except.Trans (ExceptT, runExceptT)
 import Control.Monad.Reader.Trans (ReaderT, ask, lift, runReaderT)
 import Data.Bifunctor (lmap)
-import Driver.HttpClient (HttpPost, decodeJson, toHttpResult)
-import Driver.HttpTypes (HttpError)
+import Driver.Error (DriverError)
+import Driver.HttpClient (decodeJson, fetchPost, toDriverResult)
 import Effect.Aff (Aff)
 import Gateway.CarrierYApiClient
   ( CarrierYApiClient
@@ -21,25 +21,24 @@ import Yoga.JSON (writeJSON)
 
 newtype CarrierYApiEnvironment = CarrierYApiEnvironment
   { baseUrl :: String
-  , post :: HttpPost
   }
 
 createCarrierYApiClient :: CarrierYApiEnvironment -> CarrierYApiClient
 createCarrierYApiClient environment =
   { fetchRate: \request ->
-      lmap (const CarrierYApiRequestFailed)
+      lmap (const CarrierYApiOperationFailed)
         <$> runExceptT (runReaderT (performFetchRate request) environment)
   }
 
 performFetchRate
   :: CarrierYRateRequest
   -> ReaderT CarrierYApiEnvironment
-       (ExceptT HttpError Aff)
+       (ExceptT DriverError Aff)
        CarrierYRateResponse
 performFetchRate request = do
   CarrierYApiEnvironment environment <- ask
   lift do
-    body <- toHttpResult $ environment.post
+    body <- toDriverResult $ fetchPost
       (environment.baseUrl <> "/rates/quote")
       (writeJSON request)
     decodeJson body

@@ -11,7 +11,7 @@ pub struct carrier-z-rate-response(
 )
 
 pub type carrier-z-api-error
-  CarrierZApiRequestFailed
+  CarrierZApiOperationFailed
 
 pub effect carrier-z-api-client
   fun fetch-rate(request : carrier-z-rate-request)

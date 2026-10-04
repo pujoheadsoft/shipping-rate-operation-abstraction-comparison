@@ -60,14 +60,14 @@ fun shipment/to-carrier-z-rate-request(s : shipment) : carrier-z-rate-request
 fun carrier-x-rate-response/to-carrier-x-shipping-rate(
   response : carrier-x-rate-response
 ) : shipping-rate
-  Shipping-rate(response.service-code, response.amount)
+  Shipping-rate("CarrierX", response.amount)
 
 fun carrier-y-rate-response/to-carrier-y-shipping-rate(
   response : carrier-y-rate-response
 ) : shipping-rate
-  Shipping-rate(response.service-name, response.price)
+  Shipping-rate("CarrierY", response.price)
 
 fun carrier-z-rate-response/to-carrier-z-shipping-rate(
   response : carrier-z-rate-response
 ) : shipping-rate
-  Shipping-rate(response.service-code, response.amount)
+  Shipping-rate("CarrierZ", response.amount)

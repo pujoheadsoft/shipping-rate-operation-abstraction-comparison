@@ -43,9 +43,9 @@ spec = describe "送料を取得する" do
       requestX = { destination: "111-1111", weightGrams: 1000 } :: CarrierXRateRequest
       requestY = { postalCode: "111-1111", weight: 1000 } :: CarrierYRateRequest
       requestZ = { postalCode: "111-1111", weight: 1000 } :: CarrierZRateRequest
-      responseX = { amount: 1000, serviceCode: "ServiceCodeX" } :: CarrierXRateResponse
-      responseY = { price: 2000, serviceName: "CarrierY" } :: CarrierYRateResponse
-      responseZ = { amount: 3000, serviceCode: "ServiceCodeZ" } :: CarrierZRateResponse
+      responseX = { amount: 1000, serviceCode: "EXPRESS" } :: CarrierXRateResponse
+      responseY = { price: 2000, serviceName: "Standard Delivery" } :: CarrierYRateResponse
+      responseZ = { amount: 3000, serviceCode: "ECONOMY" } :: CarrierZRateResponse
 
       dependencies =
         { carrierXApiClient: { fetchRate: stub $ requestX :> (pure (Right responseX) :: Aff (Either CarrierXApiError CarrierXRateResponse)) }
@@ -53,9 +53,9 @@ spec = describe "送料を取得する" do
         , carrierZApiClient: { fetchRate: stub $ requestZ :> (pure (Right responseZ) :: Aff (Either CarrierZApiError CarrierZRateResponse)) }
         } :: Dependencies
       
-      rateX = ShippingRate { carrier: "ServiceCodeX", amount: 1000 }
+      rateX = ShippingRate { carrier: "CarrierX", amount: 1000 }
       rateY = ShippingRate { carrier: "CarrierY", amount: 2000 }
-      rateZ = ShippingRate { carrier: "ServiceCodeZ", amount: 3000 }
+      rateZ = ShippingRate { carrier: "CarrierZ", amount: 3000 }
       expectedRates = ShippingRates $ NonEmptyArray.cons' rateX [ rateY, rateZ ]
 
     actual <- runExceptT $ runReaderT (fetchShippingRates shipment) dependencies
@@ -68,11 +68,11 @@ spec = describe "送料を取得する" do
       requestX = { destination: "111-1111", weightGrams: 1000 } :: CarrierXRateRequest
       requestY = { postalCode: "111-1111", weight: 1000 } :: CarrierYRateRequest
       requestZ = { postalCode: "111-1111", weight: 1000 } :: CarrierZRateRequest
-      responseX = { amount: 1000, serviceCode: "ServiceCodeX" } :: CarrierXRateResponse
-      responseZ = { amount: 3000, serviceCode: "ServiceCodeZ" } :: CarrierZRateResponse
+      responseX = { amount: 1000, serviceCode: "EXPRESS" } :: CarrierXRateResponse
+      responseZ = { amount: 3000, serviceCode: "ECONOMY" } :: CarrierZRateResponse
       dependencies =
         { carrierXApiClient: { fetchRate: stub $ requestX :> (pure (Right responseX) :: Aff (Either CarrierXApiError CarrierXRateResponse)) }
-        , carrierYApiClient: { fetchRate: stub $ requestY :> (pure (Left CarrierYApiRequestFailed) :: Aff (Either CarrierYApiError CarrierYRateResponse)) }
+        , carrierYApiClient: { fetchRate: stub $ requestY :> (pure (Left CarrierYApiOperationFailed) :: Aff (Either CarrierYApiError CarrierYRateResponse)) }
         , carrierZApiClient: { fetchRate: stub $ requestZ :> (pure (Right responseZ) :: Aff (Either CarrierZApiError CarrierZRateResponse)) }
         } :: Dependencies
 

@@ -3,6 +3,7 @@ module driver/carrier-z-api-client-driver
 import std/async
 import effect/ask
 import gateway/carrier-z-api-client
+import driver/driver-error
 import driver/http-types
 import driver/http-client
 
@@ -15,9 +16,9 @@ pub fun with-carrier-z-api-client(
   with handler
     fun gateway/carrier-z-api-client/fetch-rate(request)
       with fun ask() environment
-      match to-http-result(fn () perform-fetch-rate(request))
+      match to-driver-result(fn () perform-fetch-rate(request))
         Ok(response) -> Ok(response)
-        Error(_) -> Error(CarrierZApiRequestFailed)
+        Error(_) -> Error(CarrierZApiOperationFailed)
   action()
 
 fun perform-fetch-rate(request : carrier-z-rate-request)
@@ -35,4 +36,4 @@ fun encode-rate-request(request : carrier-z-rate-request) : http-body
   ]
 
 fun decode-rate-response(_response : http-response) : carrier-z-rate-response
-  Carrier-z-rate-response(3000, "CarrierZ")
+  Carrier-z-rate-response(3000, "ECONOMY")

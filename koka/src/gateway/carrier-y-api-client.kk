@@ -11,7 +11,7 @@ pub struct carrier-y-rate-response(
 )
 
 pub type carrier-y-api-error
-  CarrierYApiRequestFailed
+  CarrierYApiOperationFailed
 
 pub effect carrier-y-api-client
   fun fetch-rate(request : carrier-y-rate-request)

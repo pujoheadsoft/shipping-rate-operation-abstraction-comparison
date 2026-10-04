@@ -19,7 +19,7 @@ type CarrierZRateResponse =
   }
 
 data CarrierZApiError
-  = CarrierZApiRequestFailed
+  = CarrierZApiOperationFailed
 
 type CarrierZApiClient =
   { fetchRate

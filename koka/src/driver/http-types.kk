@@ -7,9 +7,6 @@ pub struct http-response(
   body : http-body
 )
 
-pub type http-error
-  HttpRequestFailed
-
 pub fun http-response/(==)(a : http-response, b : http-response) : bool
   a.status == b.status && a.body == b.body
 

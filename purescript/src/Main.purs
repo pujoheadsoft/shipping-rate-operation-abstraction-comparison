@@ -8,7 +8,6 @@ import Data.Foldable (traverse_)
 import Driver.CarrierXApiClientDriver (CarrierXApiEnvironment(..), createCarrierXApiClient)
 import Driver.CarrierYApiClientDriver (CarrierYApiEnvironment(..), createCarrierYApiClient)
 import Driver.CarrierZApiClientDriver (CarrierZApiEnvironment(..), createCarrierZApiClient)
-import Driver.HttpClient (fetchPost)
 import Domain.Shipment (Shipment(..))
 import Domain.ShippingRate (ShippingRate(..))
 import Domain.ShippingRates (ShippingRates(..))
@@ -25,15 +24,12 @@ main = launchAff_ do
     dependencies =
       { carrierXApiClient: createCarrierXApiClient $ CarrierXApiEnvironment
           { baseUrl: "https://carrier-x.example.com"
-          , post: fetchPost
           }
       , carrierYApiClient: createCarrierYApiClient $ CarrierYApiEnvironment
           { baseUrl: "https://carrier-y.example.com"
-          , post: fetchPost
           }
       , carrierZApiClient: createCarrierZApiClient $ CarrierZApiEnvironment
           { baseUrl: "https://carrier-z.example.com"
-          , post: fetchPost
           }
       } :: Dependencies
     shipment = Shipment { destinationPostalCode: "111-1111", weight: 1000 }

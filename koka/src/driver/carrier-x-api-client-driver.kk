@@ -3,6 +3,7 @@ module driver/carrier-x-api-client-driver
 import std/async
 import effect/ask
 import gateway/carrier-x-api-client
+import driver/driver-error
 import driver/http-types
 import driver/http-client
 
@@ -15,9 +16,9 @@ pub fun with-carrier-x-api-client(
   with handler
     fun gateway/carrier-x-api-client/fetch-rate(request)
       with fun ask() environment
-      match to-http-result(fn () perform-fetch-rate(request))
+      match to-driver-result(fn () perform-fetch-rate(request))
         Ok(response) -> Ok(response)
-        Error(_) -> Error(CarrierXApiRequestFailed)
+        Error(_) -> Error(CarrierXApiOperationFailed)
   action()
 
 fun perform-fetch-rate(request : carrier-x-rate-request)
@@ -35,4 +36,4 @@ fun encode-rate-request(request : carrier-x-rate-request) : http-body
   ]
 
 fun decode-rate-response(_response : http-response) : carrier-x-rate-response
-  Carrier-x-rate-response(1000, "CarrierX")
+  Carrier-x-rate-response(1000, "EXPRESS")

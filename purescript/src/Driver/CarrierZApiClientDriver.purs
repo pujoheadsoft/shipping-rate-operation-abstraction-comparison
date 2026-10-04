@@ -8,8 +8,8 @@ import Prelude
 import Control.Monad.Except.Trans (ExceptT, runExceptT)
 import Control.Monad.Reader.Trans (ReaderT, ask, lift, runReaderT)
 import Data.Bifunctor (lmap)
-import Driver.HttpClient (HttpPost, decodeJson, toHttpResult)
-import Driver.HttpTypes (HttpError)
+import Driver.Error (DriverError)
+import Driver.HttpClient (decodeJson, fetchPost, toDriverResult)
 import Effect.Aff (Aff)
 import Gateway.CarrierZApiClient
   ( CarrierZApiClient
@@ -21,25 +21,24 @@ import Yoga.JSON (writeJSON)
 
 newtype CarrierZApiEnvironment = CarrierZApiEnvironment
   { baseUrl :: String
-  , post :: HttpPost
   }
 
 createCarrierZApiClient :: CarrierZApiEnvironment -> CarrierZApiClient
 createCarrierZApiClient environment =
   { fetchRate: \request ->
-      lmap (const CarrierZApiRequestFailed)
+      lmap (const CarrierZApiOperationFailed)
         <$> runExceptT (runReaderT (performFetchRate request) environment)
   }
 
 performFetchRate
   :: CarrierZRateRequest
   -> ReaderT CarrierZApiEnvironment
-       (ExceptT HttpError Aff)
+       (ExceptT DriverError Aff)
        CarrierZRateResponse
 performFetchRate request = do
   CarrierZApiEnvironment environment <- ask
   lift do
-    body <- toHttpResult $ environment.post
+    body <- toDriverResult $ fetchPost
       (environment.baseUrl <> "/shipping/quote")
       (writeJSON request)
     decodeJson body

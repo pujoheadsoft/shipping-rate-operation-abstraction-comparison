@@ -1,23 +1,20 @@
 module Driver.HttpClient
-  ( HttpPost
-  , decodeJson
+  ( decodeJson
   , fetchPost
-  , toHttpResult
+  , toDriverResult
   ) where
 
 import Prelude
 
 import Control.Monad.Except.Trans (ExceptT(..))
 import Data.Bifunctor (lmap)
-import Driver.HttpTypes (HttpError(..))
+import Driver.Error (DriverError(..))
 import Effect.Aff (Aff, attempt, throwError)
 import Effect.Exception (error)
 import Fetch (Method(..), fetch)
 import Yoga.JSON (class ReadForeign, readJSON)
 
-type HttpPost = String -> String -> Aff String
-
-fetchPost :: HttpPost
+fetchPost :: String -> String -> Aff String
 fetchPost url body = do
   response <- fetch url
     { method: POST
@@ -27,10 +24,10 @@ fetchPost url body = do
   if response.ok then response.text
   else throwError $ error $ "HTTP " <> show response.status <> " " <> response.statusText
 
-toHttpResult :: forall a. Aff a -> ExceptT HttpError Aff a
-toHttpResult action =
-  ExceptT $ lmap (const HttpRequestFailed) <$> attempt action
+toDriverResult :: forall a. Aff a -> ExceptT DriverError Aff a
+toDriverResult action =
+  ExceptT $ lmap (const DriverOperationFailed) <$> attempt action
 
-decodeJson :: forall a. ReadForeign a => String -> ExceptT HttpError Aff a
+decodeJson :: forall a. ReadForeign a => String -> ExceptT DriverError Aff a
 decodeJson value =
-  ExceptT $ pure $ lmap (const HttpRequestFailed) $ readJSON value
+  ExceptT $ pure $ lmap (const DriverOperationFailed) $ readJSON value

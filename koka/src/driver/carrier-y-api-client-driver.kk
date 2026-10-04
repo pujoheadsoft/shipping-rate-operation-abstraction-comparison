@@ -3,6 +3,7 @@ module driver/carrier-y-api-client-driver
 import std/async
 import effect/ask
 import gateway/carrier-y-api-client
+import driver/driver-error
 import driver/http-types
 import driver/http-client
 
@@ -15,9 +16,9 @@ pub fun with-carrier-y-api-client(
   with handler
     fun gateway/carrier-y-api-client/fetch-rate(request)
       with fun ask() environment
-      match to-http-result(fn () perform-fetch-rate(request))
+      match to-driver-result(fn () perform-fetch-rate(request))
         Ok(response) -> Ok(response)
-        Error(_) -> Error(CarrierYApiRequestFailed)
+        Error(_) -> Error(CarrierYApiOperationFailed)
   action()
 
 fun perform-fetch-rate(request : carrier-y-rate-request)
@@ -35,4 +36,4 @@ fun encode-rate-request(request : carrier-y-rate-request) : http-body
   ]
 
 fun decode-rate-response(_response : http-response) : carrier-y-rate-response
-  Carrier-y-rate-response(2000, "CarrierY")
+  Carrier-y-rate-response(2000, "Standard Delivery")

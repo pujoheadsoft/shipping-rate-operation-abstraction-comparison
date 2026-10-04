@@ -11,7 +11,7 @@ pub struct carrier-x-rate-response(
 )
 
 pub type carrier-x-api-error
-  CarrierXApiRequestFailed
+  CarrierXApiOperationFailed
 
 pub effect carrier-x-api-client
   fun fetch-rate(request : carrier-x-rate-request)

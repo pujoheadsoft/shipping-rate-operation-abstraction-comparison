@@ -120,19 +120,19 @@ toCarrierZRateRequest (Shipment shipment) =
 
 carrierXResponseToShippingRate :: CarrierXRateResponse -> ShippingRate
 carrierXResponseToShippingRate response = ShippingRate
-  { carrier: response.serviceCode
+  { carrier: "CarrierX"
   , amount: response.amount
   }
 
 carrierYResponseToShippingRate :: CarrierYRateResponse -> ShippingRate
 carrierYResponseToShippingRate response = ShippingRate
-  { carrier: response.serviceName
+  { carrier: "CarrierY"
   , amount: response.price
   }
 
 carrierZResponseToShippingRate :: CarrierZRateResponse -> ShippingRate
 carrierZResponseToShippingRate response = ShippingRate
-  { carrier: response.serviceCode
+  { carrier: "CarrierZ"
   , amount: response.amount
   }
 

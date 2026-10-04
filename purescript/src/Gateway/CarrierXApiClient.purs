@@ -19,7 +19,7 @@ type CarrierXRateResponse =
   }
 
 data CarrierXApiError
-  = CarrierXApiRequestFailed
+  = CarrierXApiOperationFailed
 
 type CarrierXApiClient =
   { fetchRate

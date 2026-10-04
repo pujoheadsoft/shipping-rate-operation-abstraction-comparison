@@ -19,7 +19,7 @@ type CarrierYRateResponse =
   }
 
 data CarrierYApiError
-  = CarrierYApiRequestFailed
+  = CarrierYApiOperationFailed
 
 type CarrierYApiClient =
   { fetchRate
