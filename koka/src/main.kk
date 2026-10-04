@@ -9,17 +9,17 @@ import data/non-empty
 import usecase/shipping-rate-port
 import usecase/get-shipping-rates
 import gateway/shipping-rates-gateway
-import driver/carrier-x-http-client-driver
-import driver/carrier-y-http-client-driver
-import driver/carrier-z-http-client-driver
+import driver/carrier-x-api-client-driver
+import driver/carrier-y-api-client-driver
+import driver/carrier-z-api-client-driver
 
 fun main() : <console,async,exn> ()
   val shipment = Shipment("111-1111", 1000)
 
   val rates-result : result<shipping-rates,get-shipping-rates-error> =
-    with with-carrier-x-http-client(Carrier-x-http-environment("https://carrier-x.example.com"))
-    with with-carrier-y-http-client(Carrier-y-http-environment("https://carrier-y.example.com"))
-    with with-carrier-z-http-client(Carrier-z-http-environment("https://carrier-z.example.com"))
+    with with-carrier-x-api-client(Carrier-x-api-environment("https://carrier-x.example.com"))
+    with with-carrier-y-api-client(Carrier-y-api-environment("https://carrier-y.example.com"))
+    with with-carrier-z-api-client(Carrier-z-api-environment("https://carrier-z.example.com"))
     with fun usecase/shipping-rate-port/fetch-shipping-rates(value)
       with final ctl fail(error)
         Error(error)

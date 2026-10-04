@@ -20,6 +20,7 @@ pub fun non-empty/show(
 ) : e string
   "Non-empty(" ++ element/show(head) ++ ", " ++ list/show(tail, element/show) ++ ")"
 
+// non-empty用のinterleaved
 pub fun non-empty/interleaved(
   Non-empty(head, tail) : non-empty<() -> <async|e> a>
 ) : <async|e> non-empty<a>

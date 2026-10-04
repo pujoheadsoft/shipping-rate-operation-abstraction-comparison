@@ -9,10 +9,9 @@ import domain/shipment
 import data/non-empty
 import usecase/shipping-rate-port
 import gateway/shipping-rates-gateway
-import gateway/http-types
-import gateway/carrier-x-http-client
-import gateway/carrier-y-http-client
-import gateway/carrier-z-http-client
+import gateway/carrier-x-api-client
+import gateway/carrier-y-api-client
+import gateway/carrier-z-api-client
 
 pub fun test-fetch-shipping-rates() : <async,exn> ()
   val shipment = Shipment("111-1111", 1000)
@@ -22,18 +21,18 @@ pub fun test-fetch-shipping-rates() : <async,exn> ()
   val expected = Shipping-rates(Non-empty(rateX, [rateY, rateZ]))
 
   val actual =
-    with fun gateway/carrier-x-http-client/post(request)
-      assert-equals("expected request x", Http-request("/shipping-rates", [("destination", "111-1111"), ("weightGrams", "1000")]), request)
+    with fun gateway/carrier-x-api-client/fetch-rate(request)
+      assert-equals("expected request x", Carrier-x-rate-request("111-1111", 1000), request)
       yield()
-      Ok(Http-response(200, [("amount", "1000"), ("serviceCode", "ServiceCodeX")]))
-    with fun gateway/carrier-y-http-client/post(request)
-      assert-equals("expected request y", Http-request("/rates/quote", [("postalCode", "111-1111"), ("weight", "1000")]), request)
+      Ok(Carrier-x-rate-response(1000, "ServiceCodeX"))
+    with fun gateway/carrier-y-api-client/fetch-rate(request)
+      assert-equals("expected request y", Carrier-y-rate-request("111-1111", 1000), request)
       yield()
-      Ok(Http-response(200, [("price", "2000"), ("serviceName", "CarrierY")]))
-    with fun gateway/carrier-z-http-client/post(request)
-      assert-equals("expected request z", Http-request("/shipping/quote", [("postalCode", "111-1111"), ("weight", "1000")]), request)
+      Ok(Carrier-y-rate-response(2000, "CarrierY"))
+    with fun gateway/carrier-z-api-client/fetch-rate(request)
+      assert-equals("expected request z", Carrier-z-rate-request("111-1111", 1000), request)
       yield()
-      Ok(Http-response(200, [("amount", "3000"), ("serviceCode", "ServiceCodeZ")]))
+      Ok(Carrier-z-rate-response(3000, "ServiceCodeZ"))
     with final ctl fail(e)
       impossible("エラーは発生しない")
     gateway/shipping-rates-gateway/fetch-shipping-rates(shipment)
@@ -42,15 +41,15 @@ pub fun test-fetch-shipping-rates() : <async,exn> ()
 
 pub fun test-fail-fetch-shipping-rates() : <async, exn> ()
   val shipment = Shipment("111-1111", 1000)
-  with fun gateway/carrier-x-http-client/post(request)
-    assert-equals("expected request x", Http-request("/shipping-rates", [("destination", "111-1111"), ("weightGrams", "1000")]), request)
-    Ok(Http-response(200, [("amount", "1000"), ("serviceCode", "ServiceCodeX")]))
-  with fun gateway/carrier-y-http-client/post(request)
-    assert-equals("expected request y", Http-request("/rates/quote", [("postalCode", "111-1111"), ("weight", "1000")]), request)
-    Error(HttpRequestFailed)
-  with fun gateway/carrier-z-http-client/post(request)
-    assert-equals("expected request z", Http-request("/shipping/quote", [("postalCode", "111-1111"), ("weight", "1000")]), request)
-    Ok(Http-response(200, [("amount", "3000"), ("serviceCode", "ServiceCodeZ")]))
+  with fun gateway/carrier-x-api-client/fetch-rate(request)
+    assert-equals("expected request x", Carrier-x-rate-request("111-1111", 1000), request)
+    Ok(Carrier-x-rate-response(1000, "ServiceCodeX"))
+  with fun gateway/carrier-y-api-client/fetch-rate(request)
+    assert-equals("expected request y", Carrier-y-rate-request("111-1111", 1000), request)
+    Error(CarrierYApiRequestFailed)
+  with fun gateway/carrier-z-api-client/fetch-rate(request)
+    assert-equals("expected request z", Carrier-z-rate-request("111-1111", 1000), request)
+    Ok(Carrier-z-rate-response(3000, "ServiceCodeZ"))
   with final ctl fail(e)
     assert-equals("送料取得エラーが発生する", FetchShippingRatesFailed, e)
   gateway/shipping-rates-gateway/fetch-shipping-rates(shipment)
