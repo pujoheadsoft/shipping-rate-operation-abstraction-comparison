@@ -1,6 +1,5 @@
 module Gateway.ShippingRatesGateway
   ( Dependencies
-  , ShippingRateGatewayM
   , createShippingRatePort
   , fetchShippingRates
   ) where
@@ -12,35 +11,39 @@ import Control.Monad.Reader.Trans (ReaderT, asks, lift, runReaderT)
 import Control.Parallel (parSequence)
 import Data.Array.NonEmpty as NonEmptyArray
 import Data.Bifunctor (lmap)
+import Data.Either (Either)
 import Domain.Shipment (Shipment(..))
 import Domain.ShippingRate (ShippingRate(..))
 import Domain.ShippingRates (ShippingRates(..))
-import Effect.Aff (Aff, attempt)
-import Gateway.CarrierX
-  ( CarrierXRateRequest(..)
-  , CarrierXRateResponse(..)
+import Effect.Aff (Aff)
+import Gateway.CarrierXApiClient
+  ( CarrierXApiClient
+  , CarrierXRateRequest
+  , CarrierXRateResponse
   )
-import Gateway.CarrierY
-  ( CarrierYRateRequest(..)
-  , CarrierYRateResponse(..)
+import Gateway.CarrierYApiClient
+  ( CarrierYApiClient
+  , CarrierYRateRequest
+  , CarrierYRateResponse
   )
-import Gateway.CarrierZ
-  ( CarrierZRateRequest(..)
-  , CarrierZRateResponse(..)
+import Gateway.CarrierZApiClient
+  ( CarrierZApiClient
+  , CarrierZRateRequest
+  , CarrierZRateResponse
   )
-import Port.ShippingRateError (FetchShippingRatesError(..))
-import Port.ShippingRatePort (ShippingRatePort)
+import UseCase.ShippingRatePort (FetchShippingRatesError(..), ShippingRatePort)
 
 type Dependencies =
-  { fetchCarrierXRate :: CarrierXRateRequest -> Aff CarrierXRateResponse
-  , fetchCarrierYRate :: CarrierYRateRequest -> Aff CarrierYRateResponse
-  , fetchCarrierZRate :: CarrierZRateRequest -> Aff CarrierZRateResponse
+  { carrierXApiClient :: CarrierXApiClient
+  , carrierYApiClient :: CarrierYApiClient
+  , carrierZApiClient :: CarrierZApiClient
   }
 
-type ShippingRateGatewayM =
-  ReaderT Dependencies (ExceptT FetchShippingRatesError Aff)
-
-fetchShippingRates :: Shipment -> ShippingRateGatewayM ShippingRates
+fetchShippingRates
+  :: Shipment
+  -> ReaderT Dependencies
+       (ExceptT FetchShippingRatesError Aff)
+       ShippingRates
 fetchShippingRates shipment =
   ShippingRates <$> parSequence
     (NonEmptyArray.cons'
@@ -49,60 +52,86 @@ fetchShippingRates shipment =
       , fetchCarrierZRate shipment 
       ])
 
-fetchCarrierXRate :: Shipment -> ShippingRateGatewayM ShippingRate
-fetchCarrierXRate = toCarrierXRateRequest >>> callCarrier _.fetchCarrierXRate >>> map carrierXResponseToShippingRate
+fetchCarrierXRate
+  :: Shipment
+  -> ReaderT Dependencies
+       (ExceptT FetchShippingRatesError Aff)
+       ShippingRate
+fetchCarrierXRate =
+  toCarrierXRateRequest
+    >>> callCarrier _.carrierXApiClient
+    >>> map carrierXResponseToShippingRate
 
-fetchCarrierYRate :: Shipment -> ShippingRateGatewayM ShippingRate
-fetchCarrierYRate = toCarrierYRateRequest >>> callCarrier _.fetchCarrierYRate >>> map carrierYResponseToShippingRate
+fetchCarrierYRate
+  :: Shipment
+  -> ReaderT Dependencies
+       (ExceptT FetchShippingRatesError Aff)
+       ShippingRate
+fetchCarrierYRate =
+  toCarrierYRateRequest
+    >>> callCarrier _.carrierYApiClient
+    >>> map carrierYResponseToShippingRate
 
-fetchCarrierZRate :: Shipment -> ShippingRateGatewayM ShippingRate
-fetchCarrierZRate = toCarrierZRateRequest >>> callCarrier _.fetchCarrierZRate >>> map carrierZResponseToShippingRate
+fetchCarrierZRate
+  :: Shipment
+  -> ReaderT Dependencies
+       (ExceptT FetchShippingRatesError Aff)
+       ShippingRate
+fetchCarrierZRate =
+  toCarrierZRateRequest
+    >>> callCarrier _.carrierZApiClient
+    >>> map carrierZResponseToShippingRate
 
 callCarrier
-  :: forall request response
-   . (Dependencies -> request -> Aff response)
+  :: forall request response error client
+   . (Dependencies -> { fetchRate :: request -> Aff (Either error response) | client })
   -> request
-  -> ShippingRateGatewayM response
+  -> ReaderT Dependencies
+       (ExceptT FetchShippingRatesError Aff)
+       response
 callCarrier selectClient request = do
-  fetch <- asks selectClient
-  lift $ liftCarrier $ fetch request
+  client <- asks selectClient
+  lift $ liftCarrier $ client.fetchRate request
 
-liftCarrier :: forall a. Aff a -> ExceptT FetchShippingRatesError Aff a
+liftCarrier
+  :: forall error a
+   . Aff (Either error a)
+  -> ExceptT FetchShippingRatesError Aff a
 liftCarrier action =
-  ExceptT $ lmap (const FetchShippingRatesFailed) <$> attempt action
+  ExceptT $ lmap (const FetchShippingRatesFailed) <$> action
 
 toCarrierXRateRequest :: Shipment -> CarrierXRateRequest
-toCarrierXRateRequest (Shipment shipment) = CarrierXRateRequest
+toCarrierXRateRequest (Shipment shipment) =
   { destination: shipment.destinationPostalCode
   , weightGrams: shipment.weight
   }
 
 toCarrierYRateRequest :: Shipment -> CarrierYRateRequest
-toCarrierYRateRequest (Shipment shipment) = CarrierYRateRequest
+toCarrierYRateRequest (Shipment shipment) =
   { postalCode: shipment.destinationPostalCode
   , weight: shipment.weight
   }
 
 toCarrierZRateRequest :: Shipment -> CarrierZRateRequest
-toCarrierZRateRequest (Shipment shipment) = CarrierZRateRequest
+toCarrierZRateRequest (Shipment shipment) =
   { postalCode: shipment.destinationPostalCode
   , weight: shipment.weight
   }
 
 carrierXResponseToShippingRate :: CarrierXRateResponse -> ShippingRate
-carrierXResponseToShippingRate (CarrierXRateResponse response) = ShippingRate
+carrierXResponseToShippingRate response = ShippingRate
   { carrier: response.serviceCode
   , amount: response.amount
   }
 
 carrierYResponseToShippingRate :: CarrierYRateResponse -> ShippingRate
-carrierYResponseToShippingRate (CarrierYRateResponse response) = ShippingRate
+carrierYResponseToShippingRate response = ShippingRate
   { carrier: response.serviceName
   , amount: response.price
   }
 
 carrierZResponseToShippingRate :: CarrierZRateResponse -> ShippingRate
-carrierZResponseToShippingRate (CarrierZRateResponse response) = ShippingRate
+carrierZResponseToShippingRate response = ShippingRate
   { carrier: response.serviceCode
   , amount: response.amount
   }

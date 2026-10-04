@@ -7,10 +7,13 @@ package:
     - console
     - effect
     - either
+    - exceptions
+    - fetch
     - foldable-traversable
     - parallel
     - prelude
     - transformers
+    - yoga-json
   test:
     main: Test.Main
     dependencies:

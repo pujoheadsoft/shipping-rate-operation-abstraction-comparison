@@ -9,13 +9,11 @@ import Domain.Shipment (Shipment(..))
 import Domain.ShippingRate (ShippingRate(..))
 import Domain.ShippingRates (ShippingRates(..))
 import Effect.Aff (Aff)
-import Port.ShippingRateError (FetchShippingRatesError(..))
-import Port.ShippingRatePort (ShippingRatePort)
 import Test.PMock (stub, (:>))
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
-import UseCase.GetShippingRates (getShippingRates)
-import UseCase.GetShippingRatesError (GetShippingRatesError(..))
+import UseCase.GetShippingRates (GetShippingRatesError(..), getShippingRates)
+import UseCase.ShippingRatePort (FetchShippingRatesError(..), ShippingRatePort)
 
 spec :: Spec Unit
 spec = describe "荷物に対しての送料をすべて取得することができる" do

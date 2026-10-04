@@ -1,4 +1,7 @@
-module UseCase.GetShippingRates (getShippingRates) where
+module UseCase.GetShippingRates
+  ( GetShippingRatesError(..)
+  , getShippingRates
+  ) where
 
 import Prelude
 
@@ -8,9 +11,15 @@ import Data.Either (Either)
 import Domain.Shipment (Shipment)
 import Domain.ShippingRates (ShippingRates)
 import Effect.Aff (Aff)
-import Port.ShippingRateError (FetchShippingRatesError(..))
-import Port.ShippingRatePort (ShippingRatePort)
-import UseCase.GetShippingRatesError (GetShippingRatesError(..))
+import UseCase.ShippingRatePort (FetchShippingRatesError(..), ShippingRatePort)
+
+data GetShippingRatesError
+  = GetShippingRatesFailed
+
+derive instance Eq GetShippingRatesError
+
+instance Show GetShippingRatesError where
+  show GetShippingRatesFailed = "GetShippingRatesFailed"
 
 getShippingRates
   :: Shipment

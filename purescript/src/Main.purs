@@ -5,6 +5,10 @@ import Prelude
 import Control.Monad.Reader.Trans (runReaderT)
 import Data.Either (Either(..))
 import Data.Foldable (traverse_)
+import Driver.CarrierXApiClientDriver (CarrierXApiEnvironment(..), createCarrierXApiClient)
+import Driver.CarrierYApiClientDriver (CarrierYApiEnvironment(..), createCarrierYApiClient)
+import Driver.CarrierZApiClientDriver (CarrierZApiEnvironment(..), createCarrierZApiClient)
+import Driver.HttpClient (fetchPost)
 import Domain.Shipment (Shipment(..))
 import Domain.ShippingRate (ShippingRate(..))
 import Domain.ShippingRates (ShippingRates(..))
@@ -12,23 +16,25 @@ import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
-import Gateway.CarrierX (CarrierXRateResponse(..))
-import Gateway.CarrierY (CarrierYRateResponse(..))
-import Gateway.CarrierZ (CarrierZRateResponse(..))
 import Gateway.ShippingRatesGateway (Dependencies, createShippingRatePort)
-import UseCase.GetShippingRates (getShippingRates)
-import UseCase.GetShippingRatesError (GetShippingRatesError(..))
+import UseCase.GetShippingRates (GetShippingRatesError(..), getShippingRates)
 
 main :: Effect Unit
 main = launchAff_ do
   let
     dependencies =
-      { fetchCarrierXRate: \_ -> pure $
-          CarrierXRateResponse { amount: 1000, serviceCode: "CarrierX" }
-      , fetchCarrierYRate: \_ -> pure $
-          CarrierYRateResponse { price: 2000, serviceName: "CarrierY" }
-      , fetchCarrierZRate: \_ -> pure $
-          CarrierZRateResponse { amount: 3000, serviceCode: "CarrierZ" }
+      { carrierXApiClient: createCarrierXApiClient $ CarrierXApiEnvironment
+          { baseUrl: "https://carrier-x.example.com"
+          , post: fetchPost
+          }
+      , carrierYApiClient: createCarrierYApiClient $ CarrierYApiEnvironment
+          { baseUrl: "https://carrier-y.example.com"
+          , post: fetchPost
+          }
+      , carrierZApiClient: createCarrierZApiClient $ CarrierZApiEnvironment
+          { baseUrl: "https://carrier-z.example.com"
+          , post: fetchPost
+          }
       } :: Dependencies
     shipment = Shipment { destinationPostalCode: "111-1111", weight: 1000 }
     port = createShippingRatePort dependencies
