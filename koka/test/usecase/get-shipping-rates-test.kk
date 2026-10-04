@@ -4,10 +4,9 @@ import test/assert
 import domain/shipment
 import domain/shipping-rate
 import domain/shipping-rates
+import data/non-empty
 import usecase/get-shipping-rates
-import usecase/get-shipping-rates-error
-import port/shipping-rate-port
-import port/shipping-rate-error
+import usecase/shipping-rate-port
 
 pub fun test-get-shipping-rates() : ()
   val shipment = Shipment("111-1111", 10)

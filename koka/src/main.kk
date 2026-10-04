@@ -1,37 +1,26 @@
 module main
 
 import std/async
-import effect/ask
 import effect/fail
 import domain/shipment
 import domain/shipping-rate
 import domain/shipping-rates
-import port/shipping-rate-port
+import data/non-empty
+import usecase/shipping-rate-port
 import usecase/get-shipping-rates
-import usecase/get-shipping-rates-error
 import gateway/shipping-rates-gateway
-import gateway/carrier-x
-import gateway/carrier-y
-import gateway/carrier-z
+import driver/carrier-x-http-client-driver
+import driver/carrier-y-http-client-driver
+import driver/carrier-z-http-client-driver
 
 fun main() : <console,async,exn> ()
-  val dependencies = Dependencies(
-    fetch-carrier-x-rate = fn (request : carrier-x-rate-request) {
-      Carrier-x-rate-response(1000, "CarrierX")
-    },
-    fetch-carrier-y-rate = fn (request : carrier-y-rate-request) {
-      Carrier-y-rate-response(2000, "CarrierY")
-    },
-    fetch-carrier-z-rate = fn (request : carrier-z-rate-request) {
-      Carrier-z-rate-response(3000, "CarrierZ")
-    }
-  )
-
   val shipment = Shipment("111-1111", 1000)
 
   val rates-result : result<shipping-rates,get-shipping-rates-error> =
-    with fun ask() dependencies
-    with fun port/shipping-rate-port/fetch-shipping-rates(value)
+    with with-carrier-x-http-client(Carrier-x-http-environment("https://carrier-x.example.com"))
+    with with-carrier-y-http-client(Carrier-y-http-environment("https://carrier-y.example.com"))
+    with with-carrier-z-http-client(Carrier-z-http-environment("https://carrier-z.example.com"))
+    with fun usecase/shipping-rate-port/fetch-shipping-rates(value)
       with final ctl fail(error)
         Error(error)
       Ok(gateway/shipping-rates-gateway/fetch-shipping-rates(value))
