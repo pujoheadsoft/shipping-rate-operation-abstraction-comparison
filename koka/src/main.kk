@@ -20,10 +20,7 @@ fun main() : <console,async,exn> ()
     with with-carrier-x-api-client(Carrier-x-api-environment("https://carrier-x.example.com"))
     with with-carrier-y-api-client(Carrier-y-api-environment("https://carrier-y.example.com"))
     with with-carrier-z-api-client(Carrier-z-api-environment("https://carrier-z.example.com"))
-    with fun usecase/shipping-rate-port/fetch-shipping-rates(value)
-      with final ctl fail(error)
-        Error(error)
-      Ok(gateway/shipping-rates-gateway/fetch-shipping-rates(value))
+    with run-shipping-rate-port
     get-shipping-rates(shipment)
 
   match rates-result

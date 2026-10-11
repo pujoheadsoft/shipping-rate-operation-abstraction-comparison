@@ -11,6 +11,16 @@ import gateway/carrier-x-api-client
 import gateway/carrier-y-api-client
 import gateway/carrier-z-api-client
 
+pub fun run-shipping-rate-port(
+  action : () -> <shipping-rate-port,carrier-x-api-client,carrier-y-api-client,
+                   carrier-z-api-client,async|e> a
+) : <carrier-x-api-client,carrier-y-api-client,carrier-z-api-client,async|e> a
+  with fun usecase/shipping-rate-port/fetch-shipping-rates(value)
+    with final ctl fail(error)
+      Error(error)
+    Ok(fetch-shipping-rates(value))
+  action()
+
 pub fun fetch-shipping-rates(shipment : shipment)
   : <carrier-x-api-client,carrier-y-api-client,carrier-z-api-client,async,
      fail<fetch-shipping-rates-error>> shipping-rates

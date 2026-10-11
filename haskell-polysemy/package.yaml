@@ -1,0 +1,42 @@
+name: shipping-rate-polysemy
+version: 0.1.0.0
+
+language: GHC2021
+default-extensions:
+  - BlockArguments
+  - DataKinds
+  - GADTs
+  - LambdaCase
+  - TemplateHaskell
+  - TypeApplications
+  - TypeOperators
+ghc-options:
+  - -Wall
+dependencies:
+  - base >= 4.18 && < 5
+  - aeson
+  - async
+  - bytestring
+  - http-conduit
+  - http-types
+  - polysemy == 1.9.2.0
+  - stm
+
+library:
+  source-dirs: src
+
+executables:
+  shipping-rate-polysemy:
+    main: Main.hs
+    source-dirs: app
+    dependencies:
+      - shipping-rate-polysemy
+
+tests:
+  test:
+    main: Spec.hs
+    source-dirs: test
+    dependencies:
+      - shipping-rate-polysemy
+      - hspec
+      - mockcat

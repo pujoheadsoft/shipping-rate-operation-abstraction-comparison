@@ -8,11 +8,16 @@ export type CarrierYApiEnvironment = Readonly<{
 export const createCarrierYApiClient = (
   environment: CarrierYApiEnvironment,
 ): CarrierYApiClient => ({
-  fetchRate: async (request: CarrierYRateRequest) => {
-    const body = await fetchPost(
-      `${environment.baseUrl}/rates/quote`,
-      JSON.stringify(request),
-    );
-    return JSON.parse(body) as CarrierYRateResponse;
-  },
+  fetchRate: (request: CarrierYRateRequest) => performFetchRate(environment, request),
 });
+
+const performFetchRate = async (
+  environment: CarrierYApiEnvironment,
+  request: CarrierYRateRequest,
+): Promise<CarrierYRateResponse> => {
+  const body = await fetchPost(
+    `${environment.baseUrl}/rates/quote`,
+    JSON.stringify(request),
+  );
+  return JSON.parse(body) as CarrierYRateResponse;
+};

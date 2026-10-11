@@ -1,0 +1,20 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "format": "prettier --write src test README.md package.json tsconfig.json .prettierrc.json",
+    "format:check": "prettier --check src test README.md package.json tsconfig.json .prettierrc.json",
+    "start": "tsx src/main.ts",
+    "test": "tsx --test test/usecase/*.test.ts test/gateway/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "effect": "4.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "prettier": "^3.9.10",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  }
+}

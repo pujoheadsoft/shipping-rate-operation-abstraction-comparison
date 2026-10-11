@@ -8,11 +8,16 @@ export type CarrierXApiEnvironment = Readonly<{
 export const createCarrierXApiClient = (
   environment: CarrierXApiEnvironment,
 ): CarrierXApiClient => ({
-  fetchRate: async (request: CarrierXRateRequest) => {
-    const body = await fetchPost(
-      `${environment.baseUrl}/shipping-rates`,
-      JSON.stringify(request),
-    );
-    return JSON.parse(body) as CarrierXRateResponse;
-  },
+  fetchRate: (request: CarrierXRateRequest) => performFetchRate(environment, request),
 });
+
+const performFetchRate = async (
+  environment: CarrierXApiEnvironment,
+  request: CarrierXRateRequest,
+): Promise<CarrierXRateResponse> => {
+  const body = await fetchPost(
+    `${environment.baseUrl}/shipping-rates`,
+    JSON.stringify(request),
+  );
+  return JSON.parse(body) as CarrierXRateResponse;
+};

@@ -1,0 +1,42 @@
+name: shipping-rate-effectful
+version: 0.1.0.0
+
+language: GHC2021
+default-extensions:
+  - BlockArguments
+  - DataKinds
+  - GADTs
+  - LambdaCase
+  - TypeApplications
+  - TypeFamilies
+  - TypeOperators
+ghc-options:
+  - -Wall
+dependencies:
+  - base >= 4.18 && < 5
+  - aeson
+  - bytestring
+  - effectful == 2.6.1.0
+  - http-conduit
+  - http-types
+
+library:
+  source-dirs: src
+
+executables:
+  shipping-rate-effectful:
+    main: Main.hs
+    source-dirs: app
+    dependencies:
+      - shipping-rate-effectful
+
+tests:
+  test:
+    main: Spec.hs
+    source-dirs: test
+    dependencies:
+      - shipping-rate-effectful
+      - hspec
+      - mockcat
+      - async
+      - stm

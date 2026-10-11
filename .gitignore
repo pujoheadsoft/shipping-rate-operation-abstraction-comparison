@@ -4,10 +4,22 @@ node_modules/
 
 # Build artifacts and tool caches
 typescript/deno.lock
-purescript/.spago/
-purescript/.psc-ide-port
-purescript/.spec-results
-purescript/output/
+purescript-mtl/.spago/
+purescript-mtl/.psc-ide-port
+purescript-mtl/.spec-results
+purescript-mtl/output/
+purescript-run/.spago/
+purescript-run/output/
+scala-kyo/.bsp/
+scala-kyo/.scala-build/
+.bsp/
+.metals/
+haskell-polysemy/.stack-work/
+haskell-polysemy/shipping-rate-polysemy.cabal
+haskell-effectful/.stack-work/
+haskell-effectful/shipping-rate-effectful.cabal
+flix/build/
+flix/artifact/
 koka/.koka/
 coverage/
 .cache/

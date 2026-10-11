@@ -1,0 +1,5 @@
+[package]
+name = "shipping-rate-flix"
+version = "0.1.0"
+flix = "0.77.0"
+

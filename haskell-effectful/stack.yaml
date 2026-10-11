@@ -1,0 +1,5 @@
+resolver: lts-24.61
+packages:
+  - .
+extra-deps:
+  - mockcat-1.5.0.0@sha256:18c185b4aaa2366faa7513899d43fc32fa050ae907653541ceef262b1b753f58,5437

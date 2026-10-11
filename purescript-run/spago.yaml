@@ -1,0 +1,28 @@
+package:
+  name: shipping-rate-purescript-run
+  dependencies:
+    - aff
+    - arrays
+    - console
+    - effect
+    - either
+    - exceptions
+    - fetch
+    - free
+    - freeap
+    - nonempty
+    - parallel
+    - prelude
+    - run
+    - tuples
+    - yoga-json
+  test:
+    main: Test.Main
+    dependencies:
+      - pmock
+      - spec
+      - spec-node
+workspace:
+  packageSet:
+    registry: 81.1.0
+  extraPackages: {}
