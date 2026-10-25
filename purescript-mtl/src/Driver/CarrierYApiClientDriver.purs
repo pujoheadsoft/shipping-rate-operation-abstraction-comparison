@@ -6,7 +6,7 @@ module Driver.CarrierYApiClientDriver
 import Prelude
 
 import Control.Monad.Except.Trans (ExceptT, runExceptT)
-import Control.Monad.Reader.Trans (ReaderT, ask, lift, runReaderT)
+import Control.Monad.Reader.Trans (ReaderT(..), runReaderT)
 import Data.Bifunctor (lmap)
 import Driver.Error (DriverError)
 import Driver.HttpClient (decodeJson, fetchPost, toDriverResult)
@@ -35,10 +35,14 @@ performFetchRate
   -> ReaderT CarrierYApiEnvironment
        (ExceptT DriverError Aff)
        CarrierYRateResponse
-performFetchRate request = do
-  CarrierYApiEnvironment environment <- ask
-  lift do
-    body <- toDriverResult $ fetchPost
-      (environment.baseUrl <> "/rates/quote")
-      (writeJSON request)
-    decodeJson body
+performFetchRate =
+  fetchRate >>> ReaderT
+  where
+  fetchRate request (CarrierYApiEnvironment { baseUrl }) =
+    fetchAndDecode baseUrl request
+
+  fetchAndDecode baseUrl =
+    writeJSON
+      >>> fetchPost (baseUrl <> "/rates/quote")
+      >>> toDriverResult
+      >=> decodeJson

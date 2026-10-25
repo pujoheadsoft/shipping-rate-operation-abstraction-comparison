@@ -45,7 +45,7 @@ pub fun test-get-cheapest-rate-fails-when-postal-code-fetch-fails() : ()
     get-cheapest-shipping-rate(User-id("userId"), Weight(500))
 
   assert-equals(
-    "郵便番号の取得に失敗したらユースケースのエラーが返る",
+    "郵便番号の取得に失敗したらGetCheapestShippingRateFailedを返す",
     Error(GetCheapestShippingRateFailed),
     actual
   )
@@ -60,7 +60,7 @@ pub fun test-get-cheapest-rate-fails-when-shipping-destination-is-not-found() : 
     get-cheapest-shipping-rate(User-id("unknown"), Weight(500))
 
   assert-equals(
-    "郵便番号が存在しなければ配送先未登録エラーを返す",
+    "郵便番号が存在しなければShippingDestinationNotFoundを返す",
     Error(ShippingDestinationNotFound),
     actual
   )
@@ -74,7 +74,7 @@ pub fun test-get-cheapest-rate-fails-when-shipping-rates-fetch-fails() : ()
     get-cheapest-shipping-rate(User-id("userId"), Weight(500))
 
   assert-equals(
-    "送料の取得に失敗したらユースケースのエラーが返る",
+    "送料の取得に失敗したらGetCheapestShippingRateFailedを返す",
     Error(GetCheapestShippingRateFailed),
     actual
   )

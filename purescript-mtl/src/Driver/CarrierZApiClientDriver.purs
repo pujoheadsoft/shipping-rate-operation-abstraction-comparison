@@ -6,7 +6,7 @@ module Driver.CarrierZApiClientDriver
 import Prelude
 
 import Control.Monad.Except.Trans (ExceptT, runExceptT)
-import Control.Monad.Reader.Trans (ReaderT, ask, lift, runReaderT)
+import Control.Monad.Reader.Trans (ReaderT(..), runReaderT)
 import Data.Bifunctor (lmap)
 import Driver.Error (DriverError)
 import Driver.HttpClient (decodeJson, fetchPost, toDriverResult)
@@ -35,10 +35,14 @@ performFetchRate
   -> ReaderT CarrierZApiEnvironment
        (ExceptT DriverError Aff)
        CarrierZRateResponse
-performFetchRate request = do
-  CarrierZApiEnvironment environment <- ask
-  lift do
-    body <- toDriverResult $ fetchPost
-      (environment.baseUrl <> "/shipping/quote")
-      (writeJSON request)
-    decodeJson body
+performFetchRate =
+  fetchRate >>> ReaderT
+  where
+  fetchRate request (CarrierZApiEnvironment { baseUrl }) =
+    fetchAndDecode baseUrl request
+
+  fetchAndDecode baseUrl =
+    writeJSON
+      >>> fetchPost (baseUrl <> "/shipping/quote")
+      >>> toDriverResult
+      >=> decodeJson

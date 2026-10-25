@@ -6,9 +6,11 @@ import Control.Monad.Except.Trans (runExceptT)
 import Control.Monad.Reader.Trans (runReaderT)
 import Data.Array.NonEmpty as NonEmptyArray
 import Data.Either (Either(..))
+import Domain.PostalCode (PostalCode(..))
 import Domain.Shipment (Shipment(..))
 import Domain.ShippingRate (ShippingRate(..))
 import Domain.ShippingRates (ShippingRates(..))
+import Domain.Weight (Weight(..))
 import Effect.Aff (Aff)
 import Gateway.CarrierXApiClient
   ( CarrierXApiError
@@ -38,7 +40,10 @@ spec :: Spec Unit
 spec = describe "送料を取得する" do
   it "3社へリクエストを送り、すべての送料を取得できる" do
     let
-      shipment = Shipment { destinationPostalCode: "111-1111", weight: 1000 }
+      shipment = Shipment
+        { destinationPostalCode: PostalCode "111-1111"
+        , weight: Weight 1000
+        }
 
       requestX = { destination: "111-1111", weightGrams: 1000 } :: CarrierXRateRequest
       requestY = { postalCode: "111-1111", weight: 1000 } :: CarrierYRateRequest
@@ -64,7 +69,10 @@ spec = describe "送料を取得する" do
 
   it "エラーが発生した場合は送料取得エラーを返す" do
     let
-      shipment = Shipment { destinationPostalCode: "111-1111", weight: 1000 }
+      shipment = Shipment
+        { destinationPostalCode: PostalCode "111-1111"
+        , weight: Weight 1000
+        }
       requestX = { destination: "111-1111", weightGrams: 1000 } :: CarrierXRateRequest
       requestY = { postalCode: "111-1111", weight: 1000 } :: CarrierYRateRequest
       requestZ = { postalCode: "111-1111", weight: 1000 } :: CarrierZRateRequest

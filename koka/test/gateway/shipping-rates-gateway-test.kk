@@ -53,7 +53,7 @@ pub fun test-fail-fetch-shipping-rates() : <async, exn> ()
     assert-equals("expected request z", Carrier-z-rate-request("111-1111", 1000), request)
     Ok(Carrier-z-rate-response(3000, "ECONOMY"))
   with final ctl fail(e)
-    assert-equals("送料取得エラーが発生する", FetchShippingRatesFailed, e)
+    assert-equals("Carrier APIの失敗をFetchShippingRatesFailedに変換する", FetchShippingRatesFailed, e)
   gateway/shipping-rates-gateway/fetch-shipping-rates(shipment)
 
   assert("failが呼ばれるはず", False)

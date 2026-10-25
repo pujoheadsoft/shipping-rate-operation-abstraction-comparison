@@ -2,26 +2,31 @@ module Main (main) where
 
 import Prelude
 
+import Control.Monad.Except.Trans (runExceptT)
 import Control.Monad.Reader.Trans (runReaderT)
 import Data.Either (Either(..))
-import Data.Foldable (traverse_)
 import Driver.CarrierXApiClientDriver (CarrierXApiEnvironment(..), createCarrierXApiClient)
 import Driver.CarrierYApiClientDriver (CarrierYApiEnvironment(..), createCarrierYApiClient)
 import Driver.CarrierZApiClientDriver (CarrierZApiEnvironment(..), createCarrierZApiClient)
-import Domain.Shipment (Shipment(..))
+import Driver.UserApiClientDriver (UserApiEnvironment(..), createUserApiClient)
 import Domain.ShippingRate (ShippingRate(..))
-import Domain.ShippingRates (ShippingRates(..))
+import Domain.UserId (UserId(..))
+import Domain.Weight (Weight(..))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
-import Gateway.ShippingRatesGateway (Dependencies, createShippingRatePort)
-import UseCase.GetShippingRates (GetShippingRatesError(..), getShippingRates)
+import Gateway.PostalCodeGateway (createPostalCodePort)
+import Gateway.ShippingRatesGateway (createShippingRatePort)
+import UseCase.GetCheapestShippingRate
+  ( GetCheapestShippingRateError(..)
+  , getCheapestShippingRate
+  )
 
 main :: Effect Unit
 main = launchAff_ do
   let
-    dependencies =
+    shippingRatesDependencies =
       { carrierXApiClient: createCarrierXApiClient $ CarrierXApiEnvironment
           { baseUrl: "https://carrier-x.example.com"
           }
@@ -31,21 +36,26 @@ main = launchAff_ do
       , carrierZApiClient: createCarrierZApiClient $ CarrierZApiEnvironment
           { baseUrl: "https://carrier-z.example.com"
           }
-      } :: Dependencies
-    shipment = Shipment { destinationPostalCode: "111-1111", weight: 1000 }
-    port = createShippingRatePort dependencies
+      }
+    postalCodePort = createPostalCodePort
+      { userApiClient: createUserApiClient $ UserApiEnvironment
+          { baseUrl: "https://users.example.com"
+          }
+      }
+    shippingRatePort = createShippingRatePort shippingRatesDependencies
 
-  result <- runReaderT (getShippingRates shipment) port
+  result <- runExceptT $ runReaderT
+    (getCheapestShippingRate (UserId "user-123") (Weight 1000))
+    { postalCodePort, shippingRatePort }
 
   liftEffect case result of
-    Right rates -> printShippingRates rates
-    Left GetShippingRatesFailed ->
-      log "送料の取得に失敗しました。配送業者から送料を取得できませんでした。"
-
-printShippingRates :: ShippingRates -> Effect Unit
-printShippingRates (ShippingRates rates) = do
-  log "送料の取得に成功しました。"
-  traverse_ printShippingRate rates
+    Right rate -> do
+      log "一番安い送料の取得に成功しました。"
+      printShippingRate rate
+    Left ShippingDestinationNotFound ->
+      log "配送先が登録されていません。"
+    Left GetCheapestShippingRateFailed ->
+      log "一番安い送料の取得に失敗しました。"
 
 printShippingRate :: ShippingRate -> Effect Unit
 printShippingRate (ShippingRate rate) =

@@ -13,8 +13,10 @@ import Data.Array.NonEmpty as NonEmptyArray
 import Data.Bifunctor (lmap)
 import Data.Either (Either)
 import Domain.Shipment (Shipment(..))
+import Domain.PostalCode (PostalCode(..))
 import Domain.ShippingRate (ShippingRate(..))
 import Domain.ShippingRates (ShippingRates(..))
+import Domain.Weight (Weight(..))
 import Effect.Aff (Aff)
 import Gateway.CarrierXApiClient
   ( CarrierXApiClient
@@ -101,21 +103,21 @@ liftCarrier action =
   ExceptT $ lmap (const FetchShippingRatesFailed) <$> action
 
 toCarrierXRateRequest :: Shipment -> CarrierXRateRequest
-toCarrierXRateRequest (Shipment shipment) =
-  { destination: shipment.destinationPostalCode
-  , weightGrams: shipment.weight
+toCarrierXRateRequest (Shipment { destinationPostalCode: PostalCode postalCode, weight: Weight weight }) =
+  { destination: postalCode
+  , weightGrams: weight
   }
 
 toCarrierYRateRequest :: Shipment -> CarrierYRateRequest
-toCarrierYRateRequest (Shipment shipment) =
-  { postalCode: shipment.destinationPostalCode
-  , weight: shipment.weight
+toCarrierYRateRequest (Shipment { destinationPostalCode: PostalCode postalCode, weight: Weight weight }) =
+  { postalCode
+  , weight
   }
 
 toCarrierZRateRequest :: Shipment -> CarrierZRateRequest
-toCarrierZRateRequest (Shipment shipment) =
-  { postalCode: shipment.destinationPostalCode
-  , weight: shipment.weight
+toCarrierZRateRequest (Shipment { destinationPostalCode: PostalCode postalCode, weight: Weight weight }) =
+  { postalCode
+  , weight
   }
 
 carrierXResponseToShippingRate :: CarrierXRateResponse -> ShippingRate
@@ -136,8 +138,16 @@ carrierZResponseToShippingRate response = ShippingRate
   , amount: response.amount
   }
 
+runFetchShippingRates
+  :: Dependencies
+  -> Shipment
+  -> Aff (Either FetchShippingRatesError ShippingRates)
+runFetchShippingRates dependencies =
+  fetchShippingRates
+    >>> flip runReaderT dependencies
+    >>> runExceptT
+
 createShippingRatePort :: Dependencies -> ShippingRatePort
 createShippingRatePort dependencies =
-  { fetchShippingRates: \shipment ->
-      runExceptT $ runReaderT (fetchShippingRates shipment) dependencies
+  { fetchShippingRates: runFetchShippingRates dependencies
   }

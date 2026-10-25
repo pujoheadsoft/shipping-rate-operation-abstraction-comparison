@@ -6,9 +6,11 @@ import Control.Monad.Except.Trans (runExceptT)
 import Control.Monad.Reader.Trans (runReaderT)
 import Data.Either (Either(..))
 import Data.Array.NonEmpty as NonEmptyArray
+import Domain.PostalCode (PostalCode(..))
 import Domain.Shipment (Shipment(..))
 import Domain.ShippingRate (ShippingRate(..))
 import Domain.ShippingRates (ShippingRates(..))
+import Domain.Weight (Weight(..))
 import Effect.Aff (bracket, forkAff, joinFiber, killFiber)
 import Effect.Aff.AVar as AVar
 import Effect.Exception (error)
@@ -44,7 +46,9 @@ spec = describe "送料取得の並行実行" do
         ]
       action = runExceptT $ runReaderT
         (fetchShippingRates $ Shipment
-          { destinationPostalCode: "111-1111", weight: 1000 })
+          { destinationPostalCode: PostalCode "111-1111"
+          , weight: Weight 1000
+          })
         dependencies
     bracket
       (forkAff action)

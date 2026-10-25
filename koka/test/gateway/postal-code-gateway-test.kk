@@ -30,4 +30,4 @@ pub fun test-fetch-postal-code-fails-when-user-api-fails() : ()
       Error(UserApiOperationFailed)
     fetch-postal-code(User-id("userId"))
 
-  assert-equals("ユーザーAPIの失敗を郵便番号取得エラーに変換する", Error(FetchPostalCodeFailed), actual)
+  assert-equals("ユーザーAPIの失敗をFetchPostalCodeFailedに変換する", Error(FetchPostalCodeFailed), actual)
