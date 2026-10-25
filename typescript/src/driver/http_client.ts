@@ -1,3 +1,23 @@
+export class HttpError extends Error {
+  constructor(
+    readonly status: number,
+    statusText: string,
+  ) {
+    super(`HTTP ${status} ${statusText}`);
+    this.name = "HttpError";
+  }
+}
+
+export const fetchGet = async (url: string): Promise<string> => {
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new HttpError(response.status, response.statusText);
+  }
+
+  return response.text();
+};
+
 export const fetchPost = async (
   url: string,
   body: string,
@@ -9,7 +29,7 @@ export const fetchPost = async (
   });
 
   if (!response.ok) {
-    throw new Error(`HTTP ${response.status} ${response.statusText}`);
+    throw new HttpError(response.status, response.statusText);
   }
 
   return response.text();
