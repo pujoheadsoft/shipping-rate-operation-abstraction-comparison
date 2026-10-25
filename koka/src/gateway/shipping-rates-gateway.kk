@@ -5,6 +5,8 @@ import effect/fail
 import domain/shipment
 import domain/shipping-rate
 import domain/shipping-rates
+import domain/postal-code
+import domain/weight
 import data/non-empty
 import usecase/shipping-rate-port
 import gateway/carrier-x-api-client
@@ -58,14 +60,14 @@ fun from-api-result(value : result<a,b>)
     Ok(response) -> response
     Error(_) -> fail(FetchShippingRatesFailed)
 
-fun shipment/to-carrier-x-rate-request(s : shipment) : carrier-x-rate-request
-  Carrier-x-rate-request(s.destination-postal-code, s.weight)
+fun shipment/to-carrier-x-rate-request((Shipment (Postal-code(code), Weight(weight)))) : carrier-x-rate-request
+  Carrier-x-rate-request(code, weight)
 
-fun shipment/to-carrier-y-rate-request(s : shipment) : carrier-y-rate-request
-  Carrier-y-rate-request(s.destination-postal-code, s.weight)
+fun shipment/to-carrier-y-rate-request((Shipment (Postal-code(code), Weight(weight)))) : carrier-y-rate-request
+  Carrier-y-rate-request(code, weight)
 
-fun shipment/to-carrier-z-rate-request(s : shipment) : carrier-z-rate-request
-  Carrier-z-rate-request(s.destination-postal-code, s.weight)
+fun shipment/to-carrier-z-rate-request((Shipment (Postal-code(code), Weight(weight)))) : carrier-z-rate-request
+  Carrier-z-rate-request(code, weight)
 
 fun carrier-x-rate-response/to-carrier-x-shipping-rate(
   response : carrier-x-rate-response

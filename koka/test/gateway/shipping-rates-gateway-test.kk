@@ -3,6 +3,8 @@ module test/gateway/shipping-rates-gateway-test
 import std/async
 import effect/fail
 import test/assert
+import domain/postal-code
+import domain/weight
 import domain/shipping-rates
 import domain/shipping-rate
 import domain/shipment
@@ -14,7 +16,7 @@ import gateway/carrier-y-api-client
 import gateway/carrier-z-api-client
 
 pub fun test-fetch-shipping-rates() : <async,exn> ()
-  val shipment = Shipment("111-1111", 1000)
+  val shipment = Shipment(Postal-code("111-1111"), Weight(1000))
   val rateX = Shipping-rate("CarrierX", 1000)
   val rateY = Shipping-rate("CarrierY", 2000)
   val rateZ = Shipping-rate("CarrierZ", 3000)
@@ -40,7 +42,7 @@ pub fun test-fetch-shipping-rates() : <async,exn> ()
   assert-equals("3社すべての送料が一致する", expected, actual)
 
 pub fun test-fail-fetch-shipping-rates() : <async, exn> ()
-  val shipment = Shipment("111-1111", 1000)
+  val shipment = Shipment(Postal-code("111-1111"), Weight(1000))
   with fun gateway/carrier-x-api-client/fetch-rate(request)
     assert-equals("expected request x", Carrier-x-rate-request("111-1111", 1000), request)
     Ok(Carrier-x-rate-response(1000, "EXPRESS"))

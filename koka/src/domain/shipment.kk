@@ -1,8 +1,11 @@
 module domain/shipment
 
+import domain/postal-code
+import domain/weight
+
 pub struct shipment(
-  destination-postal-code : string,
-  weight : int
+  destination-postal-code : postal-code,
+  weight : weight
 )
 
 pub fun shipment/(==)(
@@ -12,4 +15,4 @@ pub fun shipment/(==)(
   postal-code1 == postal-code2 && weight1 == weight2
 
 pub fun shipment/show(Shipment(postal-code, weight)) : string
-  "Shipment(\"" ++ postal-code ++ "\", " ++ weight.show ++ ")"
+  "Shipment(\"" ++ postal-code.show ++ "\", " ++ weight.show ++ ")"

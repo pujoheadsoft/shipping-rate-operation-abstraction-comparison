@@ -2,36 +2,39 @@ module main
 
 import std/async
 import effect/fail
-import domain/shipment
+import domain/user-id
+import domain/weight
 import domain/shipping-rate
-import domain/shipping-rates
-import data/non-empty
 import usecase/shipping-rate-port
-import usecase/get-shipping-rates
+import usecase/get-cheapest-shipping-rate
 import gateway/shipping-rates-gateway
+import gateway/postal-code-gateway
 import driver/carrier-x-api-client-driver
 import driver/carrier-y-api-client-driver
 import driver/carrier-z-api-client-driver
+import driver/user-api-client-driver
 
 fun main() : <console,async,exn> ()
-  val shipment = Shipment("111-1111", 1000)
+  val user-id = User-id("user-123")
+  val weight = Weight(1000)
 
-  val rates-result : result<shipping-rates,get-shipping-rates-error> =
+  val rate-result : result<shipping-rate,get-cheapest-shipping-rate-error> =
     with with-carrier-x-api-client(Carrier-x-api-environment("https://carrier-x.example.com"))
     with with-carrier-y-api-client(Carrier-y-api-environment("https://carrier-y.example.com"))
     with with-carrier-z-api-client(Carrier-z-api-environment("https://carrier-z.example.com"))
+    with with-user-api-client(User-api-environment("https://users.example.com"))
     with run-shipping-rate-port
-    get-shipping-rates(shipment)
+    with run-postal-code-port
+    get-cheapest-shipping-rate(user-id, weight)
 
-  match rates-result
-    Ok(rates) ->
-      print-shipping-rates(rates)
-    Error(GetShippingRatesFailed) ->
-      println("送料の取得に失敗しました。配送業者から送料を取得できませんでした。")
-
-fun print-shipping-rates(Shipping-rates(Non-empty(head, tail))) : console ()
-  println("送料の取得に成功しました。")
-  Cons(head, tail).foreach(print-shipping-rate)
+  match rate-result
+    Ok(rate) ->
+      println("一番安い送料の取得に成功しました。")
+      print-shipping-rate(rate)
+    Error(ShippingDestinationNotFound) ->
+      println("配送先が見つかりませんでした。")
+    Error(GetCheapestShippingRateFailed) ->
+      println("一番安い送料の取得に失敗しました。")
 
 fun print-shipping-rate(Shipping-rate(carrier, amount)) : console ()
   println("  " ++ carrier ++ ": " ++ amount.show ++ "円")
