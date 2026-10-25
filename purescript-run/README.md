@@ -3,12 +3,12 @@
 ## 対応とバージョン
 
 - PureScript 0.15.15、purescript-run 5.0.0、purescript-freeap 7.0.0、package set 81.1.0
-- Domainはhead/tailで非空を保証し、Carrier固有DTO、Port effect、UseCase/Gateway、2段階error mappingを既存版に対応させた。
-- Carrier X/Y/ZとShippingRatePortは別のrow-polymorphic first-order `Run` effect。非同期は`AFF`、失敗は`Either`。
+- Domainはhead/tailで送料の非空を保証し、`UserId`、`PostalCode`、`Weight`をnewtypeで区別する。
+- User APIからユーザーIDに対応する郵便番号を取得し、その配送先についてCarrier X/Y/Zの送料を取得して最安値を返す。Carrier X/Y/Z、UserApiClient、PostalCodePort、ShippingRatePortは別のrow-polymorphic first-order `Run` effect。
 
 Gatewayは `Shipment -> FreeAp (Run carrierEffects) (Either FetchShippingRatesError ShippingRates)`。Carrier operationは `Request -> Run (carrierEffect | r) (Either CarrierApiError Response)`。Gatewayは各operationを共通の`ShippingRate`へ変換し、汎用の`parallelSequence`で`Traversable`内の任意個数の未解釈処理から静的な並列batchを組み立てる。Gatewayでは`NonEmpty Array`を使うため、1社以上という保証を失わない。Carrier失敗の結合には`Either`のApplicativeを使う。
 
-`FreeAp`自体にはMonadがないため、ShippingRatePortを含む逐次的なUseCaseとの接続には `ParallelRun r = Free (FreeAp (Run r))` を使う。Freeの各stepが一つの静的並列batchを表す。ShippingRatePortの`runShippingRatePort`はGatewayのbatchを`ParallelRun`へliftし、Mainは必ずUseCaseを入口として実行する。
+`FreeAp`自体にはMonadがないため、PostalCodePortとShippingRatePortを逐次実行するUseCaseとの接続には `ParallelRun r = Free (FreeAp (Run r))` を使う。Freeの各stepが一つの静的並列batchを表す。`runApplicationPorts`は郵便番号取得を単一Run、送料取得を並列batchとして`ParallelRun`へliftし、Mainは必ずUseCaseを入口として実行する。
 
 各Driverの公開`runCarrier...`はopen row handlerであり、Carrier effectを除去して`AFF`を追加する。Mainは3つのDriverを合成して `Run carrierEffects ~> Aff` を構築し、`runParallel`が `foldFreeAp (parallel <<< interpret)` で各batchを並列実行する。GatewayはDriverや自然変換を引数に受け取らない。
 

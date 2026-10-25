@@ -4,9 +4,11 @@ import qualified Control.Concurrent.Async  as IO
 import           Control.Concurrent.STM
 import           Control.Exception         (finally)
 import           Data.List.NonEmpty        (NonEmpty (..))
+import           Domain.PostalCode
 import           Domain.Shipment
 import           Domain.ShippingRate
 import           Domain.ShippingRates
+import           Domain.Weight
 import qualified Gateway.CarrierXApiClient as X
 import qualified Gateway.CarrierYApiClient as Y
 import qualified Gateway.CarrierZApiClient as Z
@@ -34,7 +36,7 @@ spec = describe "送料取得の並行実行" do
         (gate $ X.CarrierXRateResponse 1 "EXPRESS")
         (gate $ Y.CarrierYRateResponse 2 "Standard Delivery")
         (gate $ Z.CarrierZRateResponse 3 "ECONOMY")
-        (Shipment "111-1111" 1000))
+        shipment)
       $ \worker -> do
           timeout 2000000 (atomically $ readTVar started >>= check . (== 3))
             `shouldReturn` Just ()
@@ -50,10 +52,13 @@ spec = describe "送料取得の並行実行" do
           (atomically (modifyTVar' started (+1)) >> atomically retry)
             `finally` atomically (modifyTVar' stopped (+1))
     IO.withAsync
-      (runGateway waitForever waitForever waitForever (Shipment "111-1111" 1000))
+      (runGateway waitForever waitForever waitForever shipment)
       $ \worker -> do
           timeout 2000000 (atomically $ readTVar started >>= check . (== 3))
             `shouldReturn` Just ()
           IO.cancel worker
           timeout 2000000 (atomically $ readTVar stopped >>= check . (== 3))
             `shouldReturn` Just ()
+
+shipment :: Shipment
+shipment = Shipment (PostalCode "111-1111") (Weight 1000)

@@ -1,5 +1,68 @@
 [
   [
+    "ユーザーIDから郵便番号を取得する ユーザーAPIの失敗をFetchPostalCodeFailedに変換する",
+    {
+      "timestamp": "1792925320254.0",
+      "success": true
+    }
+  ],
+  [
+    "ユーザーIDから郵便番号を取得する ユーザーIDから郵便番号を取得できる",
+    {
+      "timestamp": "1792925320254.0",
+      "success": true
+    }
+  ],
+  [
+    "ユーザーIDから郵便番号を取得する ユーザーが存在しなければPostalCodeNotFoundを返す",
+    {
+      "timestamp": "1792925320254.0",
+      "success": true
+    }
+  ],
+  [
+    "ユーザーの配送先に対する最安送料を取得する 一番安い送料を取得できる",
+    {
+      "timestamp": "1792925320254.0",
+      "success": true
+    }
+  ],
+  [
+    "ユーザーの配送先に対する最安送料を取得する 送料の取得に失敗したらGetCheapestShippingRateFailedを返す",
+    {
+      "timestamp": "1792925320254.0",
+      "success": true
+    }
+  ],
+  [
+    "ユーザーの配送先に対する最安送料を取得する 郵便番号が存在しなければShippingDestinationNotFoundを返す",
+    {
+      "timestamp": "1792925320254.0",
+      "success": true
+    }
+  ],
+  [
+    "ユーザーの配送先に対する最安送料を取得する 郵便番号の取得に失敗したらGetCheapestShippingRateFailedを返す",
+    {
+      "timestamp": "1792925320254.0",
+      "success": true
+    }
+  ],
+  [
+    "一番安い送料を探す 一番安い送料を返す",
+    {
+      "timestamp": "1792925320254.0",
+      "success": true
+    }
+  ],
+  [
+    "一番安い送料を探す 最安が複数あるなら最初に見つかったものを返す",
+    {
+      "timestamp": "1792925320254.0",
+      "success": true
+    }
+  ],
+  [
     "荷物に対しての送料をすべて取得することができる 荷物に対しての送料をすべて取得できる",
     {
       "timestamp": "1791729896119.0",
@@ -16,7 +79,14 @@
   [
     "送料を取得する 3社へリクエストを送り、すべての送料を取得できる",
     {
-      "timestamp": "1791729896119.0",
+      "timestamp": "1792925320254.0",
+      "success": true
+    }
+  ],
+  [
+    "送料を取得する Carrier APIでエラーが発生したらFetchShippingRatesFailedを返す",
+    {
+      "timestamp": "1792925320254.0",
       "success": true
     }
   ],
@@ -37,14 +107,14 @@
   [
     "送料取得の並行実行 Affの失敗は待機中の兄弟branchを中断する",
     {
-      "timestamp": "1791729896119.0",
+      "timestamp": "1792925320254.0",
       "success": true
     }
   ],
   [
     "送料取得の並行実行 CarrierのLeftは他branchを中断せず、すべての結果を待つ",
     {
-      "timestamp": "1791729896119.0",
+      "timestamp": "1792925320254.0",
       "success": true
     }
   ],
@@ -58,14 +128,14 @@
   [
     "送料取得の並行実行 未解釈Carrier effectの3つのbranchが重なる",
     {
-      "timestamp": "1791729896119.0",
+      "timestamp": "1792925320254.0",
       "success": true
     }
   ],
   [
     "送料取得の並行実行 親計算をcancelすると待機中の3つのbranchも終了する",
     {
-      "timestamp": "1791729896119.0",
+      "timestamp": "1792925320254.0",
       "success": true
     }
   ]

@@ -1,10 +1,12 @@
 module Main where
 
 import Prelude
-import Domain.Shipment (Shipment(..))
+import Domain.UserId (UserId(..))
+import Domain.Weight (Weight(..))
 import Driver.CarrierXApiClientDriver (runCarrierXApiClient)
 import Driver.CarrierYApiClientDriver (runCarrierYApiClient)
 import Driver.CarrierZApiClientDriver (runCarrierZApiClient)
+import Driver.UserApiClientDriver (runUserApiClient)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
@@ -12,22 +14,24 @@ import Effect.Console (log)
 import Run (Run, runBaseAff)
 import Run as Run
 import Run.Parallel (runParallel)
-import Gateway.ShippingRatesGateway (runShippingRatePort)
-import Gateway.ShippingRatesGateway as Gateway
-import UseCase.GetShippingRates (getShippingRates)
+import Gateway.ApplicationGateway (API_CLIENTS, runApplicationPorts)
+import Run.Except as RunExcept
+import UseCase.GetCheapestShippingRate (getCheapestShippingRate)
 
 main :: Effect Unit
 main = launchAff_ do
   let
-    shipment = Shipment { destinationPostalCode: "111-1111", weight: 1000 }
-    interpretCarriers
-      :: Run (Gateway.CARRIER_API_CLIENTS ())
+    interpretApis
+      :: Run (API_CLIENTS ())
       ~> Aff
-    interpretCarriers = runBaseAff
+    interpretApis = runBaseAff
       <<< runCarrierZApiClient { baseUrl: "https://carrier-z.example.com" }
       <<< runCarrierYApiClient { baseUrl: "https://carrier-y.example.com" }
       <<< runCarrierXApiClient { baseUrl: "https://carrier-x.example.com" }
+      <<< runUserApiClient { baseUrl: "https://users.example.com" }
       <<< Run.expand
-    program = runShippingRatePort $ getShippingRates shipment
-  result <- runParallel interpretCarriers program
+    program = runApplicationPorts
+      $ RunExcept.runExcept
+      $ getCheapestShippingRate (UserId "user-123") (Weight 1000)
+  result <- runParallel interpretApis program
   liftEffect $ log $ show result

@@ -1,15 +1,18 @@
-module Driver.HttpClient (decodeJson, fetchPost, toDriverResult) where
+module Driver.HttpClient (decodeJson, fetchGet, fetchPost, toDriverResult) where
 
 import Prelude
 import Data.Bifunctor (lmap)
 import Driver.Error (DriverError(..))
 import Effect.Aff (Aff, attempt, throwError)
 import Effect.Exception (error)
-import Fetch (Method(..), fetch)
+import Fetch (Method(..), Response, fetch)
 import Run (AFF, Run, liftAff)
 import Run.Except as RunExcept
 import Type.Row (type (+))
 import Yoga.JSON (class ReadForeign, readJSON)
+
+fetchGet :: String -> Aff Response
+fetchGet url = fetch url { method: GET }
 
 fetchPost :: String -> String -> Aff String
 fetchPost url body = do

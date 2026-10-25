@@ -11,8 +11,10 @@ import Data.Either (Either)
 import Data.NonEmpty (NonEmpty, (:|))
 import Data.Traversable (sequence)
 import Domain.Shipment (Shipment(..))
+import Domain.PostalCode (PostalCode(..))
 import Domain.ShippingRate (ShippingRate(..))
 import Domain.ShippingRates (ShippingRates(..))
+import Domain.Weight (Weight(..))
 import Gateway.CarrierXApiClient as X
 import Gateway.CarrierYApiClient as Y
 import Gateway.CarrierZApiClient as Z
@@ -76,16 +78,16 @@ fetchCarrierZRate shipment = Z.fetchRate (toCarrierZRateRequest shipment)
   # map (lmap (const FetchShippingRatesFailed) >>> map toShippingRateZ)
 
 toCarrierXRateRequest :: Shipment -> X.CarrierXRateRequest
-toCarrierXRateRequest (Shipment shipment) =
-  { destination: shipment.destinationPostalCode, weightGrams: shipment.weight }
+toCarrierXRateRequest (Shipment { destinationPostalCode: PostalCode postalCode, weight: Weight weight }) =
+  { destination: postalCode, weightGrams: weight }
 
 toCarrierYRateRequest :: Shipment -> Y.CarrierYRateRequest
-toCarrierYRateRequest (Shipment shipment) =
-  { postalCode: shipment.destinationPostalCode, weight: shipment.weight }
+toCarrierYRateRequest (Shipment { destinationPostalCode: PostalCode postalCode, weight: Weight weight }) =
+  { postalCode, weight }
 
 toCarrierZRateRequest :: Shipment -> Z.CarrierZRateRequest
-toCarrierZRateRequest (Shipment shipment) =
-  { postalCode: shipment.destinationPostalCode, weight: shipment.weight }
+toCarrierZRateRequest (Shipment { destinationPostalCode: PostalCode postalCode, weight: Weight weight }) =
+  { postalCode, weight }
 
 toShippingRates :: NonEmpty Array ShippingRate -> ShippingRates
 toShippingRates (head :| tail) = ShippingRates { head, tail }

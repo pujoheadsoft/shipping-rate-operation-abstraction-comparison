@@ -1,6 +1,9 @@
 module Domain.Shipment (Shipment(..)) where
 
+import Domain.PostalCode (PostalCode)
+import Domain.Weight (Weight)
+
 data Shipment = Shipment
-  { destinationPostalCode :: String
-  , weight                :: Int
+  { destinationPostalCode :: PostalCode
+  , weight                :: Weight
   } deriving (Eq, Show)

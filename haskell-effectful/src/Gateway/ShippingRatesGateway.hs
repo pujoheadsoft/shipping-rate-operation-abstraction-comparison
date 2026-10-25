@@ -4,9 +4,11 @@ module Gateway.ShippingRatesGateway
   ) where
 
 import           Data.List.NonEmpty         (NonEmpty (..))
+import           Domain.PostalCode          (PostalCode (..))
 import           Domain.Shipment
 import           Domain.ShippingRate
 import           Domain.ShippingRates
+import           Domain.Weight              (Weight (..))
 import           Effectful
 import           Effectful.Concurrent.Async (Concurrent, concurrently)
 import           Effectful.Dispatch.Dynamic (interpret)
@@ -45,9 +47,9 @@ fetchCarrierXRate shipment = do
     >>= either (const $ throwError FetchShippingRatesFailed) pure
   pure $ ShippingRate "CarrierX" (X.amount response)
   where
-    request = X.CarrierXRateRequest
-      (destinationPostalCode shipment)
-      (weight shipment)
+    request = X.CarrierXRateRequest postalCode weightInGrams
+    PostalCode postalCode = destinationPostalCode shipment
+    Weight weightInGrams = weight shipment
 
 fetchCarrierYRate
   :: ( Y.CarrierYApiClient :> es
@@ -60,9 +62,9 @@ fetchCarrierYRate shipment = do
     >>= either (const $ throwError FetchShippingRatesFailed) pure
   pure $ ShippingRate "CarrierY" (Y.price response)
   where
-    request = Y.CarrierYRateRequest
-      (destinationPostalCode shipment)
-      (weight shipment)
+    request = Y.CarrierYRateRequest postalCode weightInGrams
+    PostalCode postalCode = destinationPostalCode shipment
+    Weight weightInGrams = weight shipment
 
 fetchCarrierZRate
   :: ( Z.CarrierZApiClient :> es
@@ -75,9 +77,9 @@ fetchCarrierZRate shipment = do
     >>= either (const $ throwError FetchShippingRatesFailed) pure
   pure $ ShippingRate "CarrierZ" (Z.amount response)
   where
-    request = Z.CarrierZRateRequest
-      (destinationPostalCode shipment)
-      (weight shipment)
+    request = Z.CarrierZRateRequest postalCode weightInGrams
+    PostalCode postalCode = destinationPostalCode shipment
+    Weight weightInGrams = weight shipment
 
 parallel3
   :: Concurrent :> es

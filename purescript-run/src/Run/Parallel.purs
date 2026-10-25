@@ -1,5 +1,6 @@
 module Run.Parallel
   ( ParallelRun
+  , liftRun
   , liftParallel
   , parallelSequence
   , runParallel
@@ -21,6 +22,9 @@ derive newtype instance Apply (ParallelRun r)
 derive newtype instance Applicative (ParallelRun r)
 derive newtype instance Bind (ParallelRun r)
 derive newtype instance Monad (ParallelRun r)
+
+liftRun :: forall r a. Run r a -> ParallelRun r a
+liftRun = liftFreeAp >>> liftParallel
 
 liftParallel :: forall r. FreeAp (Run r) ~> ParallelRun r
 liftParallel = ParallelRun <<< liftF

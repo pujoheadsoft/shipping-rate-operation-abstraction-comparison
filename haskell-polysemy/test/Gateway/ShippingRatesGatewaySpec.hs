@@ -1,9 +1,11 @@
 module Gateway.ShippingRatesGatewaySpec (spec) where
 
 import           Data.List.NonEmpty           (NonEmpty (..))
+import           Domain.PostalCode
 import           Domain.Shipment
 import           Domain.ShippingRate
 import           Domain.ShippingRates
+import           Domain.Weight
 import qualified Gateway.CarrierXApiClient    as X
 import qualified Gateway.CarrierYApiClient    as Y
 import qualified Gateway.CarrierZApiClient    as Z
@@ -36,9 +38,9 @@ spec = describe "送料を取得する" do
           :| [ShippingRate "CarrierY" 2000, ShippingRate "CarrierZ" 3000]
           )
 
-    runGateway x y z (Shipment "111-1111" 1000) `shouldReturn` Right expected
+    runGateway x y z shipment `shouldReturn` Right expected
 
-  it "Carrierでエラーが発生した場合は送料取得エラーを返す" do
+  it "Carrier APIでエラーが発生したらFetchShippingRatesFailedを返す" do
     let x = stub
           (X.CarrierXRateRequest "111-1111" 1000 ~>
             Right (X.CarrierXRateResponse 1000 "EXPRESS"))
@@ -51,7 +53,10 @@ spec = describe "送料を取得する" do
           (Z.CarrierZRateRequest "111-1111" 1000 ~>
             Right (Z.CarrierZRateResponse 3000 "ECONOMY"))
 
-    runGateway x y z (Shipment "111-1111" 1000) `shouldReturn` Left FetchShippingRatesFailed
+    runGateway x y z shipment `shouldReturn` Left FetchShippingRatesFailed
+
+shipment :: Shipment
+shipment = Shipment (PostalCode "111-1111") (Weight 1000)
 
 runGateway
   :: (X.CarrierXRateRequest -> Either X.CarrierXApiError X.CarrierXRateResponse)

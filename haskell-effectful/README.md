@@ -3,7 +3,7 @@
 ## 対応とバージョン
 
 - Stack 3.9.1 / LTS Haskell 24.61、effectful 2.6.1.0
-- Domainは`NonEmpty ShippingRate`、Carrier固有DTO、dynamic Carrier/Port effects、static typed Errorを既存版に対応させた。
+- Domainは`NonEmpty ShippingRate`に加え、`UserId`、`PostalCode`、`Weight`をnewtypeで区別する。User APIから配送先の郵便番号を取得し、Carrier X/Y/Zの送料から最安値を返す。
 - Gatewayは `Eff es ShippingRates` requiring Carrier X/Y/Z、`Error FetchShippingRatesError`、`Concurrent`。
 - Carrier interpreterは環境をclosureに保持し、内部で`Reader`、`Error DriverError`、`IOE`を使うdynamic handler。
 
@@ -13,7 +13,7 @@
 
 Gatewayはeffectful標準の`Effectful.Concurrent.Async.concurrently`を使い、3つの`Eff es` branchをstructuredにjoinする。`Concurrent` handlerはchildごとにeffect environmentを引き継ぐため、Carrier effectsを残したまま並行化できる。実行時には`runConcurrent`の内側へCarrier interpreterを置き、子threadでdynamic handlerが動く形にしている。
 
-composition rootの順序は UseCase → ShippingRatePort interpreter → Carrier X/Y/Z interpreter → Concurrent → GetShippingRates Error → IOE。Port interpreterはGatewayの`Error FetchShippingRatesError`を局所的に`Either`へ戻す。Driver内の通信・status・decode失敗はstatic `Error DriverError`となり、Carrier interpreterがCarrier固有errorへ変換する。`Driver`だけが`http-conduit`/Aesonとendpoint/JSONを所有する。
+composition rootの順序は UseCase → PostalCodePort / ShippingRatePort interpreter → User / Carrier X/Y/Z interpreter → Concurrent → GetCheapestShippingRate Error → IOE。各Port interpreterはGateway固有の失敗を`Either`へ戻す。User APIの404は`PostalCodeNotFound`を経て`ShippingDestinationNotFound`へ変換し、それ以外の取得失敗は`GetCheapestShippingRateFailed`へ変換する。`Driver`だけが`http-conduit`/Aesonとendpoint/JSONを所有する。
 
 ## 評価
 

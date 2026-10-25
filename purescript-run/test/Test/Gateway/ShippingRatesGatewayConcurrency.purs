@@ -5,9 +5,11 @@ import Prelude
 import Control.Monad.Error.Class (throwError)
 import Data.Either (Either(..), isLeft)
 import Data.Maybe (Maybe(..))
+import Domain.PostalCode (PostalCode(..))
 import Domain.Shipment (Shipment(..))
 import Domain.ShippingRate (ShippingRate(..))
 import Domain.ShippingRates (ShippingRates(..))
+import Domain.Weight (Weight(..))
 import Effect.Aff (attempt, bracket, finally, forkAff, joinFiber, killFiber)
 import Effect.Aff.AVar as AVar
 import Effect.Exception (error)
@@ -20,7 +22,10 @@ import Test.Support.RunCarriers (runCarriersWith)
 import UseCase.ShippingRatePort (FetchShippingRatesError(..))
 
 shipment :: Shipment
-shipment = Shipment { destinationPostalCode: "111-1111", weight: 1000 }
+shipment = Shipment
+  { destinationPostalCode: PostalCode "111-1111"
+  , weight: Weight 1000
+  }
 
 spec :: Spec Unit
 spec = describe "送料取得の並行実行" do

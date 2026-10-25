@@ -1,7 +1,11 @@
-module TestSupport (runGateway, runUseCase) where
+module TestSupport (runGateway, runPostalGateway, runUseCase) where
 
+import           Domain.PostalCode
 import           Domain.Shipment
+import           Domain.ShippingRate
 import           Domain.ShippingRates
+import           Domain.UserId
+import           Domain.Weight
 import           Effectful
 import           Effectful.Concurrent.Async   (runConcurrent)
 import           Effectful.Dispatch.Dynamic   (interpret)
@@ -9,8 +13,11 @@ import           Effectful.Error.Static
 import qualified Gateway.CarrierXApiClient    as X
 import qualified Gateway.CarrierYApiClient    as Y
 import qualified Gateway.CarrierZApiClient    as Z
+import qualified Gateway.PostalCodeGateway    as PostalGateway
 import qualified Gateway.ShippingRatesGateway as Gateway
-import           UseCase.GetShippingRates
+import qualified Gateway.UserApiClient        as UserApi
+import           UseCase.GetCheapestShippingRate
+import           UseCase.PostalCodePort
 import           UseCase.ShippingRatePort
 
 runGateway
@@ -28,12 +35,23 @@ runGateway x y z =
     . interpret (\_ -> \case X.FetchRateX request -> liftIO $ x request)
     . Gateway.fetchShippingRates
 
+runPostalGateway
+  :: (UserApi.UserRequest -> Either UserApi.UserApiError UserApi.UserResponse)
+  -> UserId
+  -> Either FetchPostalCodeError PostalCode
+runPostalGateway client userId = runPureEff
+  . interpret (\_ -> \case UserApi.FetchUser request -> pure $ client request)
+  . PostalGateway.runPostalCodePort
+  $ fetchPostalCodeByUserId userId
+
 runUseCase
-  :: (Shipment -> IO (Either FetchShippingRatesError ShippingRates))
-  -> Shipment
-  -> IO (Either GetShippingRatesError ShippingRates)
-runUseCase port =
-  runEff
-    . runErrorNoCallStack @GetShippingRatesError
-    . interpret (\_ -> \case FetchShippingRates shipment -> liftIO $ port shipment)
-    . getShippingRates
+  :: (UserId -> Either FetchPostalCodeError PostalCode)
+  -> (Shipment -> Either FetchShippingRatesError ShippingRates)
+  -> UserId
+  -> Weight
+  -> Either GetCheapestShippingRateError ShippingRate
+runUseCase postalCodePort shippingRatePort userId weight = runPureEff
+  . runErrorNoCallStack @GetCheapestShippingRateError
+  . interpret (\_ -> \case FetchShippingRates shipment -> pure $ shippingRatePort shipment)
+  . interpret (\_ -> \case FetchPostalCodeByUserId requestedUserId -> pure $ postalCodePort requestedUserId)
+  $ getCheapestShippingRate userId weight

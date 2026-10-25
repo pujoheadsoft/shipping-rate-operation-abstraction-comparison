@@ -3,7 +3,7 @@
 ## 対応とバージョン
 
 - Stack 3.9.1 / LTS Haskell 22.44（GHC 9.6.7）、Polysemy 1.9.2.0
-- Domainは`NonEmpty ShippingRate`、Carrier固有DTO、Port effect、UseCase/Gateway、2段階error mappingを既存版と同じにした。
+- Domainは`NonEmpty ShippingRate`に加え、`UserId`、`PostalCode`、`Weight`をnewtypeで区別する。User APIから配送先の郵便番号を取得し、Carrier X/Y/Zの送料から最安値を返す。
 - Gatewayは `Members '[CarrierXApiClient, CarrierYApiClient, CarrierZApiClient, Error FetchShippingRatesError, Async, Resource] r => Shipment -> Sem r ShippingRates`。
 - Carrier interpreterは環境をclosureに保持し、内部で`Reader`、`Error DriverError`、`Embed IO`を使う。
 
@@ -19,7 +19,7 @@ Carrier X operationは `CarrierXRateRequest -> Sem '[CarrierXApiClient] (Either 
 
 なおwaitはX/Y/Z順なので、後順位のchildが予期しないIO例外で終了し、先頭childが停止したままの場合にfail-fastで観測する仕組みではない。`Resource`により最終的な漏洩は防ぐが、この応答性はproduction上の残課題である。
 
-composition rootの順序は UseCase → ShippingRatePort interpreter → Carrier X/Y/Z interpreter → GetShippingRates Error → Async → Resource → Embed IO → Final IO。Port interpreterはGatewayの`Error FetchShippingRatesError`を局所的に`Either`へ戻す。各Carrier interpreterの内部ではReaderとDriver Errorを処理し、`DriverError`をCarrier固有errorへ変換する。`Driver`だけが`http-conduit`/AesonとCarrier endpoint/JSON契約を知る。
+composition rootの順序は UseCase → PostalCodePort / ShippingRatePort interpreter → User / Carrier X/Y/Z interpreter → GetCheapestShippingRate Error → Async → Resource → Embed IO → Final IO。各Port interpreterはGateway固有の失敗を`Either`へ戻す。User APIの404は`PostalCodeNotFound`を経て`ShippingDestinationNotFound`へ変換し、それ以外の取得失敗は`GetCheapestShippingRateFailed`へ変換する。`Driver`だけが`http-conduit`/Aesonとendpoint/JSON契約を知る。
 
 ## 評価
 

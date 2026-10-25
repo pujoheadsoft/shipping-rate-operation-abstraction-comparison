@@ -5,9 +5,11 @@ module Gateway.ShippingRatesGateway
 
 import           Data.Foldable             (traverse_)
 import           Data.List.NonEmpty        (NonEmpty (..))
+import           Domain.PostalCode         (PostalCode (..))
 import           Domain.Shipment
 import           Domain.ShippingRate
 import           Domain.ShippingRates
+import           Domain.Weight             (Weight (..))
 import qualified Gateway.CarrierXApiClient as X
 import qualified Gateway.CarrierYApiClient as Y
 import qualified Gateway.CarrierZApiClient as Z
@@ -49,9 +51,9 @@ fetchCarrierXRate shipment = do
     >>= either (const $ throw FetchShippingRatesFailed) pure
   pure $ ShippingRate "CarrierX" (X.amount response)
   where
-    request = X.CarrierXRateRequest
-      (destinationPostalCode shipment)
-      (weight shipment)
+    request = X.CarrierXRateRequest postalCode weightInGrams
+    PostalCode postalCode = destinationPostalCode shipment
+    Weight weightInGrams = weight shipment
 
 fetchCarrierYRate
   :: Members '[Y.CarrierYApiClient, Error FetchShippingRatesError] r
@@ -62,9 +64,9 @@ fetchCarrierYRate shipment = do
     >>= either (const $ throw FetchShippingRatesFailed) pure
   pure $ ShippingRate "CarrierY" (Y.price response)
   where
-    request = Y.CarrierYRateRequest
-      (destinationPostalCode shipment)
-      (weight shipment)
+    request = Y.CarrierYRateRequest postalCode weightInGrams
+    PostalCode postalCode = destinationPostalCode shipment
+    Weight weightInGrams = weight shipment
 
 fetchCarrierZRate
   :: Members '[Z.CarrierZApiClient, Error FetchShippingRatesError] r
@@ -75,9 +77,9 @@ fetchCarrierZRate shipment = do
     >>= either (const $ throw FetchShippingRatesFailed) pure
   pure $ ShippingRate "CarrierZ" (Z.amount response)
   where
-    request = Z.CarrierZRateRequest
-      (destinationPostalCode shipment)
-      (weight shipment)
+    request = Z.CarrierZRateRequest postalCode weightInGrams
+    PostalCode postalCode = destinationPostalCode shipment
+    Weight weightInGrams = weight shipment
 
 sequenceConcurrentlyScoped
   :: Members '[Async, Resource] r
