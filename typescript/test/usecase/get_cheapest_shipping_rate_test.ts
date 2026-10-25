@@ -42,7 +42,7 @@ test("ユーザーの配送先に対する一番安い送料を取得できる",
   expect(actual).toEqual(ok({ carrier: "配送業者Y", amount: 100 }));
 });
 
-test("郵便番号の取得に失敗したらユースケースのエラーを返す", async () => {
+test("郵便番号の取得に失敗したらGetCheapestShippingRateFailedを返す", async () => {
   const dependencies = createDependencies();
   dependencies.postalCodePort.fetchPostalCodeByUserId
     .mockResolvedValue(error(FetchPostalCodeFailed));
@@ -56,7 +56,7 @@ test("郵便番号の取得に失敗したらユースケースのエラーを�
   expect(dependencies.shippingRatePort.fetchShippingRates).not.toHaveBeenCalled();
 });
 
-test("郵便番号が存在しなければ配送先未登録エラーを返す", async () => {
+test("郵便番号が存在しなければShippingDestinationNotFoundを返す", async () => {
   const dependencies = createDependencies();
   dependencies.postalCodePort.fetchPostalCodeByUserId
     .mockResolvedValue(error(PostalCodeNotFound));
@@ -70,7 +70,7 @@ test("郵便番号が存在しなければ配送先未登録エラーを返す",
   expect(dependencies.shippingRatePort.fetchShippingRates).not.toHaveBeenCalled();
 });
 
-test("送料の取得に失敗したらユースケースのエラーを返す", async () => {
+test("送料の取得に失敗したらGetCheapestShippingRateFailedを返す", async () => {
   const dependencies = createDependencies();
   dependencies.postalCodePort.fetchPostalCodeByUserId
     .mockResolvedValue(ok("111-1111"));

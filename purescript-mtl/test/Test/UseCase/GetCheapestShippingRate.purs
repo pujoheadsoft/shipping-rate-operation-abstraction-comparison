@@ -12,21 +12,13 @@ import Domain.ShippingRate (ShippingRate(..))
 import Domain.ShippingRates (ShippingRates(..))
 import Domain.UserId (UserId(..))
 import Domain.Weight (Weight(..))
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, error, throwError)
 import Test.PMock (stub, (:>))
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
-import UseCase.GetCheapestShippingRate
-  ( Dependencies
-  , GetCheapestShippingRateError(..)
-  , getCheapestShippingRate
-  )
-import UseCase.PostalCodePort
-  ( FetchPostalCodeError(..)
-  )
-import UseCase.ShippingRatePort
-  ( FetchShippingRatesError(..)
-  )
+import UseCase.GetCheapestShippingRate (Dependencies, GetCheapestShippingRateError(..), getCheapestShippingRate)
+import UseCase.PostalCodePort (FetchPostalCodeError(..))
+import UseCase.ShippingRatePort (FetchShippingRatesError(..))
 
 spec :: Spec Unit
 spec = describe "ユーザーの配送先に対する最安送料を取得する" do
@@ -59,7 +51,7 @@ spec = describe "ユーザーの配送先に対する最安送料を取得する
     actual `shouldEqual`
       Right (ShippingRate { carrier: "配送業者Y", amount: 100 })
 
-  it "郵便番号の取得に失敗したらユースケースのエラーを返す" do
+  it "郵便番号の取得に失敗したらGetCheapestShippingRateFailedを返す" do
     let
       userId = UserId "userId"
       weight = Weight 500
@@ -70,7 +62,7 @@ spec = describe "ユーザーの配送先に対する最安送料を取得する
             }
         , shippingRatePort:
             { fetchShippingRates: \_ ->
-                pure (Left FetchShippingRatesFailed)
+                throwError $ error "郵便番号取得失敗時に送料取得Portが呼ばれた"
             }
         } :: Dependencies
 
@@ -80,7 +72,7 @@ spec = describe "ユーザーの配送先に対する最安送料を取得する
 
     actual `shouldEqual` Left GetCheapestShippingRateFailed
 
-  it "郵便番号が存在しなければ配送先未登録エラーを返す" do
+  it "郵便番号が存在しなければShippingDestinationNotFoundを返す" do
     let
       userId = UserId "unknown"
       weight = Weight 500
@@ -91,7 +83,7 @@ spec = describe "ユーザーの配送先に対する最安送料を取得する
             }
         , shippingRatePort:
             { fetchShippingRates: \_ ->
-                pure (Left FetchShippingRatesFailed)
+                throwError $ error "郵便番号取得失敗時に送料取得Portが呼ばれた"
             }
         } :: Dependencies
 
@@ -101,7 +93,7 @@ spec = describe "ユーザーの配送先に対する最安送料を取得する
 
     actual `shouldEqual` Left ShippingDestinationNotFound
 
-  it "送料の取得に失敗したらユースケースのエラーを返す" do
+  it "送料の取得に失敗したらGetCheapestShippingRateFailedを返す" do
     let
       userId = UserId "userId"
       weight = Weight 500

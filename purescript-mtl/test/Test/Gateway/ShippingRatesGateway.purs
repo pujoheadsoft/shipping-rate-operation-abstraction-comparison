@@ -67,7 +67,7 @@ spec = describe "送料を取得する" do
 
     actual `shouldEqual` Right expectedRates
 
-  it "エラーが発生した場合は送料取得エラーを返す" do
+  it "Carrier APIでエラーが発生したらFetchShippingRatesFailedを返す" do
     let
       shipment = Shipment
         { destinationPostalCode: PostalCode "111-1111"

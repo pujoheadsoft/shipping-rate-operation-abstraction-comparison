@@ -39,7 +39,7 @@ test("ユーザーが存在しなければ郵便番号なしを返す", async ()
   expect(actual).toEqual(error(PostalCodeNotFound));
 });
 
-test("ユーザーAPIの失敗を郵便番号取得エラーに変換する", async () => {
+test("ユーザーAPIの失敗をFetchPostalCodeFailedに変換する", async () => {
   const dependencies: jest.Mocked<PostalCodeGatewayDependencies> = {
     userApiClient: { fetchUser: jest.fn() },
   };

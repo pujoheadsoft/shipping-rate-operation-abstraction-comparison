@@ -33,7 +33,7 @@ test("3社へリクエストを送り、すべての送料を取得できる", a
   expect(actual).toEqual(expected);
 });
 
-test("Carrierで例外が発生した場合は送料取得エラーを返す", async () => {
+test("Carrierで例外が発生したらFetchShippingRatesFailedを返す", async () => {
   const shipment = { destinationPostalCode: "111-1111", weight: 1000 };
 
   const deps: jest.Mocked<Dependencies> = {
