@@ -2,7 +2,7 @@
 
 ## 対応とバージョン
 
-- Flix 0.77.0、JDK 25.0.4
+- Flix 0.79.0、JDK 25.0.4
 - Domain、Carrier固有DTO、UseCase/Port、全3件返却、error mappingは既存版と同じ。
 - Carrier operationは `Request -> Result[CarrierXApiError, Response] \ CarrierXApiClient`。Portもlanguage-native effect。
 - 代数側の`handle...With`はCarrier effectを具体clientの`IO`へ変換する。本番の`runShippingRatePort`はGateway、本番の`runCarrier...`はDriverに置く。
@@ -11,7 +11,7 @@ Gatewayは `Shipment -> Result[FetchShippingRatesError, ShippingRates] \ {Carrie
 
 ## Effect、Error、Concurrency
 
-Flixは未処理user-defined effectを`spawn`へ持ち込むことを禁止し、childはpureまたはprimitive effectでなければならない。`compile-fail/UnhandledEffectInSpawn.flix`を0.77.0でコンパイルすると、`Client`と`(Chan + IO + NonDet)`が一致しないエラーになる。
+Flixは未処理user-defined effectを`spawn`へ持ち込むことを禁止し、childはpureまたはprimitive effectでなければならない。`compile-fail/UnhandledEffectInSpawn.flix`を0.79.0でコンパイルすると、`Client`と`(Chan + IO + NonDet)`が一致しないエラーになる。
 
 したがって順序はKoka/Kyoと異なり、各branchでCarrier handlerを先に適用して`IO`へ変換 → region内で`spawn` → Channelでjoin、となる。region終了前にchildは終了する。Carrier/Portの業務上の失敗は`Result`で表し、Gateway/UseCaseでそれぞれ上位errorへ写像する。
 
@@ -25,8 +25,8 @@ effect exclusionによりhandler後にCarrier effectが消えたことが型へ�
 
 ```sh
 cd flix
-java -jar ~/.local/share/flix.jar test
-java -jar ~/.local/share/flix.jar check compile-fail/UnhandledEffectInSpawn.flix
+java --enable-native-access=ALL-UNNAMED -jar flix.jar test
+java --enable-native-access=ALL-UNNAMED -jar flix.jar check compile-fail/UnhandledEffectInSpawn.flix
 ```
 
 最後のコマンドは、未解釈Carrier effectを含む`spawn`が型検査で拒否されることを確認するため、意図的に失敗する。

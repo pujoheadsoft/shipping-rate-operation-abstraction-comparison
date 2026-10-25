@@ -1,5 +1,16 @@
 import java.lang.System
 
+use Domain.PostalCode
+use Domain.Weight
+use Domain.Shipment
+use Domain.ShippingRate
+use Domain.ShippingRates
+use Gateway.CarrierXApiClient.{CarrierXApiError, CarrierXRateRequest, CarrierXRateResponse}
+use Gateway.CarrierYApiClient.{CarrierYApiError, CarrierYRateRequest, CarrierYRateResponse}
+use Gateway.CarrierZApiClient.{CarrierZApiError, CarrierZRateRequest, CarrierZRateResponse}
+use Gateway.ShippingRatesGateway.fetchShippingRates
+use UseCase.ShippingRatePort.FetchShippingRatesError
+
 def gatewayTestIo(): Unit \ IO =
     let _ = System.currentTimeMillis(); ()
 
@@ -32,15 +43,14 @@ def gatewaySuccessTest(): Unit \ {Assert, Chan, NonDet, IO} =
         }
     };
 
-    let expected = ShippingRates.ShippingRates(
-        ShippingRate.ShippingRate("CarrierX", 1000),
-        ShippingRate.ShippingRate("CarrierY", 2000) ::
-            ShippingRate.ShippingRate("CarrierZ", 3000) :: Nil
+    let expected = ShippingRates(
+        ShippingRate("CarrierX", 1000),
+        ShippingRate("CarrierY", 2000) :: ShippingRate("CarrierZ", 3000) :: Nil
     );
 
     Assert.assertEq(
         expected = Ok(expected),
-        fetchShippingRates(Shipment.Shipment("111-1111", 1000), x, y, z)
+        fetchShippingRates(Shipment(PostalCode("111-1111"), Weight(1000)), x, y, z)
     )
 
 @Test
@@ -74,5 +84,5 @@ def gatewayFailureTest(): Unit \ {Assert, Chan, NonDet, IO} =
 
     Assert.assertEq(
         expected = Err(FetchShippingRatesError.FetchShippingRatesFailed),
-        fetchShippingRates(Shipment.Shipment("111-1111", 1000), x, y, z)
+        fetchShippingRates(Shipment(PostalCode("111-1111"), Weight(1000)), x, y, z)
     )
