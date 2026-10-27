@@ -5,6 +5,7 @@ module UseCase.GetCheapestShippingRate
 
 import Prelude
 import Data.Bifunctor (lmap)
+import Data.Either (Either)
 import Domain.Shipment (Shipment(..))
 import Domain.ShippingRate (ShippingRate)
 import Domain.ShippingRates (findCheapest)
@@ -37,15 +38,35 @@ getCheapestShippingRate
          )
        )
        ShippingRate
-getCheapestShippingRate userId weight = do
-  postalCode <- PostalCodePort.fetchPostalCodeByUserId userId
-    >>= RunExcept.rethrow <<< lmap toUseCasePostalCodeError
-  rates <- ShippingRatePort.fetchShippingRates
-      (Shipment { destinationPostalCode: postalCode, weight })
-    >>= RunExcept.rethrow <<< lmap (const GetCheapestShippingRateFailed)
-  pure $ findCheapest rates
+getCheapestShippingRate userId weight =
+  fetchPostalCode
+    >=> fetchShippingRatesFor weight
+    >=> pure <<< findCheapest
+    $ userId
   where
+  fetchPostalCode =
+    PostalCodePort.fetchPostalCodeByUserId
+      >=> rethrowWith toUseCasePostalCodeError
+
+  fetchShippingRates =
+    ShippingRatePort.fetchShippingRates
+      >=> rethrowWith (const GetCheapestShippingRateFailed)
+
+  fetchShippingRatesFor shipmentWeight =
+    toShipment shipmentWeight
+      >>> fetchShippingRates
+
+  toShipment shipmentWeight destinationPostalCode =
+    Shipment { destinationPostalCode, weight: shipmentWeight }
+
   toUseCasePostalCodeError PostalCodePort.PostalCodeNotFound =
     ShippingDestinationNotFound
   toUseCasePostalCodeError PostalCodePort.FetchPostalCodeFailed =
     GetCheapestShippingRateFailed
+
+rethrowWith
+  :: forall e a r
+   . (e -> GetCheapestShippingRateError)
+  -> Either e a
+  -> Run (RunExcept.EXCEPT GetCheapestShippingRateError + r) a
+rethrowWith mapError = RunExcept.rethrow <<< lmap mapError

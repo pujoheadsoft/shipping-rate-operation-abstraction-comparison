@@ -1,5 +1,6 @@
 module UseCase.GetCheapestShippingRate where
 
+import Control.Monad ((>=>))
 import Domain.Shipment (Shipment (..))
 import Domain.ShippingRate (ShippingRate)
 import Domain.ShippingRates (findCheapest)
@@ -24,12 +25,24 @@ getCheapestShippingRate
   => UserId
   -> Weight
   -> Sem r ShippingRate
-getCheapestShippingRate userId weight = do
-  postalCode <- fetchPostalCodeByUserId userId
-    >>= either (throw . toUseCasePostalCodeError) pure
-  rates <- fetchShippingRates (Shipment postalCode weight)
-    >>= either (const $ throw GetCheapestShippingRateFailed) pure
-  pure $ findCheapest rates
+getCheapestShippingRate userId weight =
+  fetchPostalCode
+    >=> fetchShippingRatesFor weight
+    >=> pure . findCheapest
+    $ userId
   where
+    fetchPostalCode requestedUserId =
+      fetchPostalCodeByUserId requestedUserId
+        >>= rethrowWith toUseCasePostalCodeError
+
+    fetchRates shipment =
+      fetchShippingRates shipment
+        >>= rethrowWith (const GetCheapestShippingRateFailed)
+
+    fetchShippingRatesFor shipmentWeight =
+      fetchRates . (`Shipment` shipmentWeight)
+
+    rethrowWith mapError = either (throw . mapError) pure
+
     toUseCasePostalCodeError PostalCodeNotFound = ShippingDestinationNotFound
     toUseCasePostalCodeError FetchPostalCodeFailed = GetCheapestShippingRateFailed
