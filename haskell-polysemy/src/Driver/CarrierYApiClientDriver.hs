@@ -6,13 +6,12 @@ module Driver.CarrierYApiClientDriver
   ) where
 
 import           Data.Aeson
-import           Data.Aeson.Types          (parseEither)
 import           Data.Bifunctor            (first)
 import           Driver.DriverError
 import           Driver.HttpClient         (postJson)
 import           Gateway.CarrierYApiClient
 import           Polysemy
-import           Polysemy.Error            (Error, runError, throw)
+import           Polysemy.Error            (Error, runError)
 import           Polysemy.Reader           (Reader, ask, runReader)
 
 newtype CarrierYApiEnvironment = CarrierYApiEnvironment
@@ -41,23 +40,13 @@ performFetchRate
   -> Sem r CarrierYRateResponse
 performFetchRate request = do
   environment <- ask @CarrierYApiEnvironment
-  response <- postJson
+  postJson
     (baseUrl environment)
     "/rates/quote"
     (encodeRateRequest request)
-  either (const $ throw DriverOperationFailed) pure
-    $ decodeRateResponse response
 
 encodeRateRequest :: CarrierYRateRequest -> Value
 encodeRateRequest request = object
   [ "postalCode" .= postalCode request
   , "weight" .= weight request
   ]
-
-decodeRateResponse :: Value -> Either String CarrierYRateResponse
-decodeRateResponse = parseEither
-  $ withObject "CarrierYRateResponse"
-  $ \value ->
-      CarrierYRateResponse
-        <$> value .: "price"
-        <*> value .: "serviceName"

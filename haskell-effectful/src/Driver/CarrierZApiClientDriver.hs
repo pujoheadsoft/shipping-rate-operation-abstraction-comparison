@@ -6,14 +6,12 @@ module Driver.CarrierZApiClientDriver
   ) where
 
 import           Data.Aeson
-import           Data.Aeson.Types           (parseEither)
 import           Data.Bifunctor             (first)
 import           Driver.DriverError
 import           Driver.HttpClient          (postJson)
 import           Effectful
 import           Effectful.Dispatch.Dynamic (interpret)
-import           Effectful.Error.Static     (Error, runErrorNoCallStack,
-                                             throwError)
+import           Effectful.Error.Static     (Error, runErrorNoCallStack)
 import           Effectful.Reader.Static    (Reader, ask, runReader)
 import           Gateway.CarrierZApiClient
 
@@ -42,23 +40,13 @@ performFetchRate
   -> Eff es CarrierZRateResponse
 performFetchRate request = do
   environment <- ask @CarrierZApiEnvironment
-  response <- postJson
+  postJson
     (baseUrl environment)
     "/shipping/quote"
     (encodeRateRequest request)
-  either (const $ throwError DriverOperationFailed) pure
-    $ decodeRateResponse response
 
 encodeRateRequest :: CarrierZRateRequest -> Value
 encodeRateRequest request = object
   [ "postalCode" .= postalCode request
   , "weight" .= weight request
   ]
-
-decodeRateResponse :: Value -> Either String CarrierZRateResponse
-decodeRateResponse = parseEither
-  $ withObject "CarrierZRateResponse"
-  $ \value ->
-      CarrierZRateResponse
-        <$> value .: "amount"
-        <*> value .: "serviceCode"

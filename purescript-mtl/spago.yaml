@@ -11,6 +11,7 @@ package:
     - fetch
     - foldable-traversable
     - parallel
+    - node-process
     - prelude
     - transformers
     - yoga-json

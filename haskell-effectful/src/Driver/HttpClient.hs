@@ -4,7 +4,7 @@
 module Driver.HttpClient (postJson) where
 
 import           Control.Exception         (try)
-import           Data.Aeson                (Value, eitherDecode)
+import           Data.Aeson                (FromJSON, Value, eitherDecode)
 import           Driver.DriverError
 import           Effectful
 import           Effectful.Error.Static    (Error, throwError)
@@ -12,11 +12,11 @@ import           Network.HTTP.Simple
 import           Network.HTTP.Types.Status (statusCode)
 
 postJson
-  :: (IOE :> es, Error DriverError :> es)
+  :: (FromJSON a, IOE :> es, Error DriverError :> es)
   => String
   -> String
   -> Value
-  -> Eff es Value
+  -> Eff es a
 postJson baseUrl path body = do
   attempted <- liftIO $ try @HttpException do
     initial <- parseRequest $ baseUrl <> path

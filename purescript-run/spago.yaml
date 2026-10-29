@@ -11,6 +11,7 @@ package:
     - free
     - freeap
     - nonempty
+    - node-process
     - parallel
     - prelude
     - run

@@ -48,8 +48,10 @@ getCheapestShippingRate
        (ExceptT GetCheapestShippingRateError Aff)
        ShippingRate
 getCheapestShippingRate userId weight =
-  fetchPostalCode userId
-    >>= (toShipment weight >>> fetchShippingRates >>> map findCheapest)
+  fetchPostalCode
+    >=> fetchShippingRatesFor weight
+    >=> pure <<< findCheapest
+    $ userId
   where
   fetchPostalCode
     :: UserId
@@ -86,6 +88,15 @@ getCheapestShippingRate userId weight =
       >>> _.fetchShippingRates
       >>> (_ $ shipment)
       >>> liftShippingRatesResult
+
+  fetchShippingRatesFor
+    :: Weight
+    -> PostalCode
+    -> ReaderT Dependencies
+         (ExceptT GetCheapestShippingRateError Aff)
+         ShippingRates
+  fetchShippingRatesFor shipmentWeight =
+    toShipment shipmentWeight >>> fetchShippingRates
 
   liftShippingRatesResult
     :: Aff (Either FetchShippingRatesError ShippingRates)

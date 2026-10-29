@@ -1,7 +1,9 @@
 module Gateway.CarrierZApiClient where
 
+import           Data.Aeson (FromJSON)
 import           Effectful
 import           Effectful.Dispatch.Dynamic (send)
+import           GHC.Generics (Generic)
 
 data CarrierZRateRequest = CarrierZRateRequest
   { postalCode :: String
@@ -11,7 +13,9 @@ data CarrierZRateRequest = CarrierZRateRequest
 data CarrierZRateResponse = CarrierZRateResponse
   { amount      :: Int
   , serviceCode :: String
-  } deriving (Eq, Show)
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON CarrierZRateResponse
 
 data CarrierZApiError = CarrierZApiOperationFailed deriving (Eq, Show)
 

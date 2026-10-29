@@ -12,24 +12,33 @@ import           Polysemy
 import           Polysemy.Async
 import           Polysemy.Error
 import           Polysemy.Resource              (resourceToIOFinal)
+import           System.Environment             (lookupEnv)
 import           UseCase.GetCheapestShippingRate
 
 main :: IO ()
-main = runApplication (UserId "user-123") (Weight 1000) >>= print
+main = do
+  userApiBaseUrl <- getEnv "USER_API_BASE_URL" "http://localhost:8081"
+  carrierXApiBaseUrl <- getEnv "CARRIER_X_API_BASE_URL" "http://localhost:8082"
+  carrierYApiBaseUrl <- getEnv "CARRIER_Y_API_BASE_URL" "http://localhost:8083"
+  carrierZApiBaseUrl <- getEnv "CARRIER_Z_API_BASE_URL" "http://localhost:8084"
+  runApplication userApiBaseUrl carrierXApiBaseUrl carrierYApiBaseUrl carrierZApiBaseUrl (UserId "user-123") (Weight 1000) >>= print
   where
-    runApplication userId weight = runFinal
+    runApplication userApiBaseUrl carrierXApiBaseUrl carrierYApiBaseUrl carrierZApiBaseUrl userId weight = runFinal
       . embedToFinal @IO
       . resourceToIOFinal
       . asyncToIOFinal
       . runError @GetCheapestShippingRateError
       . ZDriver.runCarrierZApiClient
-        (ZDriver.CarrierZApiEnvironment "https://carrier-z.example.com")
+        (ZDriver.CarrierZApiEnvironment carrierZApiBaseUrl)
       . YDriver.runCarrierYApiClient
-        (YDriver.CarrierYApiEnvironment "https://carrier-y.example.com")
+        (YDriver.CarrierYApiEnvironment carrierYApiBaseUrl)
       . XDriver.runCarrierXApiClient
-        (XDriver.CarrierXApiEnvironment "https://carrier-x.example.com")
+        (XDriver.CarrierXApiEnvironment carrierXApiBaseUrl)
       . UserDriver.runUserApiClient
-        (UserDriver.UserApiEnvironment "https://users.example.com")
+        (UserDriver.UserApiEnvironment userApiBaseUrl)
       . Gateway.runShippingRatePort
       . PostalGateway.runPostalCodePort
       $ getCheapestShippingRate userId weight
+
+getEnv :: String -> String -> IO String
+getEnv name defaultValue = maybe defaultValue id <$> lookupEnv name

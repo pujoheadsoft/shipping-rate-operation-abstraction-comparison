@@ -1,7 +1,9 @@
 module Gateway.CarrierYApiClient where
 
+import           Data.Aeson (FromJSON)
 import           Effectful
 import           Effectful.Dispatch.Dynamic (send)
+import           GHC.Generics (Generic)
 
 data CarrierYRateRequest = CarrierYRateRequest
   { postalCode :: String
@@ -11,7 +13,9 @@ data CarrierYRateRequest = CarrierYRateRequest
 data CarrierYRateResponse = CarrierYRateResponse
   { price       :: Int
   , serviceName :: String
-  } deriving (Eq, Show)
+  } deriving (Eq, Generic, Show)
+
+instance FromJSON CarrierYRateResponse
 
 data CarrierYApiError = CarrierYApiOperationFailed deriving (Eq, Show)
 

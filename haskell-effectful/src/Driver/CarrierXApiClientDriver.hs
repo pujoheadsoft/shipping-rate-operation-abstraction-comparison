@@ -6,14 +6,12 @@ module Driver.CarrierXApiClientDriver
   ) where
 
 import           Data.Aeson
-import           Data.Aeson.Types           (parseEither)
 import           Data.Bifunctor             (first)
 import           Driver.DriverError
 import           Driver.HttpClient          (postJson)
 import           Effectful
 import           Effectful.Dispatch.Dynamic (interpret)
-import           Effectful.Error.Static     (Error, runErrorNoCallStack,
-                                             throwError)
+import           Effectful.Error.Static     (Error, runErrorNoCallStack)
 import           Effectful.Reader.Static    (Reader, ask, runReader)
 import           Gateway.CarrierXApiClient
 
@@ -42,23 +40,13 @@ performFetchRate
   -> Eff es CarrierXRateResponse
 performFetchRate request = do
   environment <- ask @CarrierXApiEnvironment
-  response <- postJson
+  postJson
     (baseUrl environment)
     "/shipping-rates"
     (encodeRateRequest request)
-  either (const $ throwError DriverOperationFailed) pure
-    $ decodeRateResponse response
 
 encodeRateRequest :: CarrierXRateRequest -> Value
 encodeRateRequest request = object
   [ "destination" .= destination request
   , "weightGrams" .= weightGrams request
   ]
-
-decodeRateResponse :: Value -> Either String CarrierXRateResponse
-decodeRateResponse = parseEither
-  $ withObject "CarrierXRateResponse"
-  $ \value ->
-      CarrierXRateResponse
-        <$> value .: "amount"
-        <*> value .: "serviceCode"

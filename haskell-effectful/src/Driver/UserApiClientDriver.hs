@@ -7,8 +7,7 @@ module Driver.UserApiClientDriver
   ) where
 
 import Control.Exception (try)
-import Data.Aeson (Value, eitherDecode)
-import Data.Aeson.Types (parseEither, withObject, (.:))
+import Data.Aeson (eitherDecode)
 import Data.Bifunctor (first)
 import Effectful
 import Effectful.Dispatch.Dynamic (interpret)
@@ -42,9 +41,3 @@ performFetchUser environment request = do
       | otherwise ->
           first (const UserApiOperationFailed)
             $ eitherDecode (getResponseBody response)
-            >>= decodeUserResponse
-
-decodeUserResponse :: Value -> Either String UserResponse
-decodeUserResponse = parseEither
-  $ withObject "UserResponse"
-  $ \value -> UserResponse <$> value .: "postalCode"

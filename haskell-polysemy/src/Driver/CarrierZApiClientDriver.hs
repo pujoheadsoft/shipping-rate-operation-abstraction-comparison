@@ -6,13 +6,12 @@ module Driver.CarrierZApiClientDriver
   ) where
 
 import           Data.Aeson
-import           Data.Aeson.Types          (parseEither)
 import           Data.Bifunctor            (first)
 import           Driver.DriverError
 import           Driver.HttpClient         (postJson)
 import           Gateway.CarrierZApiClient
 import           Polysemy
-import           Polysemy.Error            (Error, runError, throw)
+import           Polysemy.Error            (Error, runError)
 import           Polysemy.Reader           (Reader, ask, runReader)
 
 newtype CarrierZApiEnvironment = CarrierZApiEnvironment
@@ -41,23 +40,13 @@ performFetchRate
   -> Sem r CarrierZRateResponse
 performFetchRate request = do
   environment <- ask @CarrierZApiEnvironment
-  response <- postJson
+  postJson
     (baseUrl environment)
     "/shipping/quote"
     (encodeRateRequest request)
-  either (const $ throw DriverOperationFailed) pure
-    $ decodeRateResponse response
 
 encodeRateRequest :: CarrierZRateRequest -> Value
 encodeRateRequest request = object
   [ "postalCode" .= postalCode request
   , "weight" .= weight request
   ]
-
-decodeRateResponse :: Value -> Either String CarrierZRateResponse
-decodeRateResponse = parseEither
-  $ withObject "CarrierZRateResponse"
-  $ \value ->
-      CarrierZRateResponse
-        <$> value .: "amount"
-        <*> value .: "serviceCode"
