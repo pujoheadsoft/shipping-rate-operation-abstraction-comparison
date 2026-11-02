@@ -56,6 +56,27 @@ UserId + Weight
 
 ちなみにこのREADMEの大半の部分はAIにまとめさせたものになります。
 
+## ワークスペースを開く
+
+このリポジトリには、各実装をまとめたmulti-root workspaceを用意しています。
+リポジトリのルートで、使用するエディターに応じて次のいずれかを実行します。
+
+VS Codeの場合：
+
+```sh
+code shipping-rate-operation-abstraction-comparison.code-workspace
+```
+
+Cursorの場合：
+
+```sh
+cursor shipping-rate-operation-abstraction-comparison.code-workspace
+```
+
+GUIから開く場合は、エディターの「File」→「Open Workspace from File...」で`shipping-rate-operation-abstraction-comparison.code-workspace`を選択します。
+
+ワークスペースを開くと、各言語の実装が個別のworkspace folderとして表示されます。使用する言語の推奨extensionは、エディターのExtensions画面から必要なものだけインストールしてください。
+
 ## 実行方法
 
 各コマンドはリポジトリのルートで実行します。実装が接続するUser APIとCarrier X/Y/Z APIは、WireMockで起動できます。
