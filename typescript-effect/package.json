@@ -5,7 +5,7 @@
     "format": "prettier --write src test README.md package.json tsconfig.json .prettierrc.json",
     "format:check": "prettier --check src test README.md package.json tsconfig.json .prettierrc.json",
     "start": "tsx src/main.ts",
-    "test": "tsx --test test/usecase/*.test.ts test/gateway/*.test.ts",
+    "test": "tsx --test test/domain/*.test.ts test/usecase/*.test.ts test/gateway/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

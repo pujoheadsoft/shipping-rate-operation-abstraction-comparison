@@ -8,21 +8,23 @@ import { createShippingRatePort, type Dependencies } from "./gateway/shipping_ra
 import { getCheapestShippingRate } from "./usecase/get_cheapest_shipping_rate.ts";
 import { ShippingDestinationNotFound } from "./usecase/get_cheapest_shipping_rate_error.ts";
 
+const getEnv = (name: string, defaultValue: string): string => Deno.env.get(name) ?? defaultValue;
+
 const main = async (): Promise<void> => {
   const dependencies: Dependencies = {
     carrierXApiClient: createCarrierXApiClient({
-      baseUrl: "https://carrier-x.example.com",
+      baseUrl: getEnv("CARRIER_X_API_BASE_URL", "http://localhost:8082"),
     }),
     carrierYApiClient: createCarrierYApiClient({
-      baseUrl: "https://carrier-y.example.com",
+      baseUrl: getEnv("CARRIER_Y_API_BASE_URL", "http://localhost:8083"),
     }),
     carrierZApiClient: createCarrierZApiClient({
-      baseUrl: "https://carrier-z.example.com",
+      baseUrl: getEnv("CARRIER_Z_API_BASE_URL", "http://localhost:8084"),
     }),
   };
   const postalCodePort = createPostalCodePort({
     userApiClient: createUserApiClient({
-      baseUrl: "https://users.example.com",
+      baseUrl: getEnv("USER_API_BASE_URL", "http://localhost:8081"),
     }),
   });
   const shippingRatePort = createShippingRatePort(dependencies);

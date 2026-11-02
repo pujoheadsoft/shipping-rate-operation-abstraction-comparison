@@ -1,13 +1,21 @@
-.PHONY: run test test-new test-all run-ts test-ts run-effect-ts test-effect-ts run-ps test-ps run-koka test-koka test-kyo test-flix test-polysemy test-effectful test-ps-run
+.PHONY: dependencies-up dependencies-down run test test-new test-all run-ts test-ts run-effect-ts test-effect-ts run-ps run-ps-mtl test-ps run-ps-run test-ps-run run-koka test-koka run-kyo test-kyo run-flix test-flix run-polysemy test-polysemy run-effectful test-effectful run-ocaml-eio-capabilities test-ocaml-eio-capabilities run-ocaml-eio-effects test-ocaml-eio-effects
 
 SPAGO_CACHE ?= $(CURDIR)/.cache/spago
-TEST_ALL_TARGETS := test-ts test-ps test-koka test-effect-ts test-kyo test-flix test-polysemy test-effectful test-ps-run
+OCAML_EXEC ?= opam exec --
+TEST_ALL_TARGETS := test-ts test-ps test-koka test-effect-ts test-kyo test-flix test-polysemy test-effectful test-ps-run test-ocaml-eio-capabilities test-ocaml-eio-effects
+RUN_ALL_TARGETS := run-ts run-ps-mtl run-koka run-effect-ts run-kyo run-flix run-polysemy run-effectful run-ps-run run-ocaml-eio-capabilities run-ocaml-eio-effects
 
-run: run-ts run-effect-ts run-ps run-koka
+dependencies-up:
+	docker compose up --detach --wait
+
+dependencies-down:
+	docker compose down
+
+run: $(RUN_ALL_TARGETS)
 
 test: test-ts test-ps test-koka
 
-test-new: test-effect-ts test-kyo test-flix test-polysemy test-effectful test-ps-run
+test-new: test-effect-ts test-kyo test-flix test-polysemy test-effectful test-ps-run test-ocaml-eio-capabilities test-ocaml-eio-effects
 
 test-all:
 	@set -u; \
@@ -59,7 +67,9 @@ run-effect-ts:
 test-effect-ts:
 	cd typescript-effect && npm run format:check && npm run typecheck && npm test
 
-run-ps:
+run-ps: run-ps-mtl
+
+run-ps-mtl:
 	cd purescript-mtl && XDG_CACHE_HOME="$(SPAGO_CACHE)" spago run
 
 test-ps:
@@ -71,17 +81,44 @@ run-koka:
 test-koka:
 	./scripts/run-koka-tests.sh
 
+run-kyo:
+	cd scala-kyo && scala-cli run . --server=false
+
 test-kyo:
 	cd scala-kyo && scala-cli test . --server=false
 
+run-flix:
+	cd flix && java --enable-native-access=ALL-UNNAMED -jar flix.jar run
+
 test-flix:
-	cd flix && java -jar "$$HOME/.local/share/flix.jar" test
+	cd flix && java --enable-native-access=ALL-UNNAMED -jar flix.jar test
+
+run-polysemy:
+	cd haskell-polysemy && stack run
 
 test-polysemy:
 	cd haskell-polysemy && stack test
 
+run-effectful:
+	cd haskell-effectful && stack run
+
 test-effectful:
 	cd haskell-effectful && stack test
 
+run-ps-run:
+	cd purescript-run && XDG_CACHE_HOME="$(SPAGO_CACHE)" spago run
+
 test-ps-run:
 	cd purescript-run && XDG_CACHE_HOME="$(SPAGO_CACHE)" spago test
+
+run-ocaml-eio-capabilities:
+	cd ocaml-eio-capabilities && $(OCAML_EXEC) dune exec bin/main.exe
+
+test-ocaml-eio-capabilities:
+	cd ocaml-eio-capabilities && $(OCAML_EXEC) dune build @fmt && $(OCAML_EXEC) dune runtest --force
+
+run-ocaml-eio-effects:
+	cd ocaml-eio-effects && $(OCAML_EXEC) dune exec bin/main.exe
+
+test-ocaml-eio-effects:
+	cd ocaml-eio-effects && $(OCAML_EXEC) dune build @fmt && $(OCAML_EXEC) dune runtest --force

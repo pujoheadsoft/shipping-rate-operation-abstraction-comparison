@@ -1,0 +1,3 @@
+(executable
+ (name main)
+ (libraries shipping_rate_eio_capabilities eio_main))

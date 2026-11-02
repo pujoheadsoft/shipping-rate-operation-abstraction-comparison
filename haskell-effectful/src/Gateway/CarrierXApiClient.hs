@@ -1,9 +1,7 @@
 module Gateway.CarrierXApiClient where
 
-import           Data.Aeson (FromJSON)
 import           Effectful
 import           Effectful.Dispatch.Dynamic (send)
-import           GHC.Generics (Generic)
 
 data CarrierXRateRequest = CarrierXRateRequest
   { destination :: String
@@ -13,9 +11,7 @@ data CarrierXRateRequest = CarrierXRateRequest
 data CarrierXRateResponse = CarrierXRateResponse
   { amount      :: Int
   , serviceCode :: String
-  } deriving (Eq, Generic, Show)
-
-instance FromJSON CarrierXRateResponse
+  } deriving (Eq, Show)
 
 data CarrierXApiError = CarrierXApiOperationFailed deriving (Eq, Show)
 

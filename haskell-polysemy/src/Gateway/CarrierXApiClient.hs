@@ -1,7 +1,5 @@
 module Gateway.CarrierXApiClient where
 
-import           Data.Aeson (FromJSON)
-import           GHC.Generics (Generic)
 import           Polysemy (makeSem)
 
 data CarrierXRateRequest = CarrierXRateRequest
@@ -12,9 +10,7 @@ data CarrierXRateRequest = CarrierXRateRequest
 data CarrierXRateResponse = CarrierXRateResponse
   { amount      :: Int
   , serviceCode :: String
-  } deriving (Eq, Generic, Show)
-
-instance FromJSON CarrierXRateResponse
+  } deriving (Eq, Show)
 
 data CarrierXApiError = CarrierXApiOperationFailed deriving (Eq, Show)
 

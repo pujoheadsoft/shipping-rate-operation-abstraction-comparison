@@ -1,0 +1,52 @@
+services:
+  user-api:
+    image: wiremock/wiremock:3.13.1
+    command: ["--global-response-templating"]
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./wiremock/user-api:/home/wiremock
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:8080/__admin/mappings >/dev/null"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  carrier-x-api:
+    image: wiremock/wiremock:3.13.1
+    command: ["--global-response-templating"]
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./wiremock/carrier-x-api:/home/wiremock
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:8080/__admin/mappings >/dev/null"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  carrier-y-api:
+    image: wiremock/wiremock:3.13.1
+    command: ["--global-response-templating"]
+    ports:
+      - "8083:8080"
+    volumes:
+      - ./wiremock/carrier-y-api:/home/wiremock
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:8080/__admin/mappings >/dev/null"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  carrier-z-api:
+    image: wiremock/wiremock:3.13.1
+    command: ["--global-response-templating"]
+    ports:
+      - "8084:8080"
+    volumes:
+      - ./wiremock/carrier-z-api:/home/wiremock
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:8080/__admin/mappings >/dev/null"]
+      interval: 2s
+      timeout: 2s
+      retries: 15

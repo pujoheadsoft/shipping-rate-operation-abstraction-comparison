@@ -1,0 +1,73 @@
+{
+  "folders": [
+    {
+      "name": "Flix",
+      "path": "flix"
+    },
+    {
+      "name": "Repository",
+      "path": "."
+    },
+    {
+      "name": "TypeScript",
+      "path": "typescript"
+    },
+    {
+      "name": "TypeScript (Effect)",
+      "path": "typescript-effect"
+    },
+    {
+      "name": "PureScript (MTL)",
+      "path": "purescript-mtl"
+    },
+    {
+      "name": "PureScript (Run)",
+      "path": "purescript-run"
+    },
+    {
+      "name": "Haskell (Polysemy)",
+      "path": "haskell-polysemy"
+    },
+    {
+      "name": "Haskell (effectful)",
+      "path": "haskell-effectful"
+    },
+    {
+      "name": "OCaml (Eio Capabilities)",
+      "path": "ocaml-eio-capabilities"
+    },
+    {
+      "name": "OCaml (Eio Effects)",
+      "path": "ocaml-eio-effects"
+    },
+    {
+      "name": "Scala (Kyo)",
+      "path": "scala-kyo"
+    },
+    {
+      "name": "Koka",
+      "path": "koka"
+    }
+  ],
+  "settings": {
+    "koka.languageServer.workingDirectory": "~/source/shipping-rate-operation-abstraction-comparison/koka",
+    "koka.languageServer.compilerArguments": [
+      "--include=src"
+    ],
+    "files.watcherExclude": {
+      "**/target/**": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "denoland.vscode-deno",
+      "nwolverson.ide-purescript",
+      "koka.language-koka",
+      "scalameta.metals",
+      "flix.flix",
+      "haskell.haskell",
+      "ocamllabs.ocaml-platform",
+      "openai.chatgpt"
+    ]
+  }
+}

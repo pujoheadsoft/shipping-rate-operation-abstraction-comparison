@@ -3,51 +3,65 @@ pub mod Driver.CarrierZApiClientDriver {
     use Driver.HttpClient.postJson
     use Gateway.CarrierZApiClient.{CarrierZApiClient, CarrierZApiError, CarrierZRateRequest, CarrierZRateResponse}
     use Util.Json
+    use Util.Json.FromJson
     use Util.Json.Json.{JNumber, JObject, JString}
+    use Util.Json.JsonError
 
-    pub enum CarrierZApiEnvironment {
-        case CarrierZApiEnvironment(String)
+    pub enum CarrierZApiEnvironment({ baseUrl = String })
+
+    enum CarrierZRateResponseJson({
+        amount = Int32,
+        serviceCode = String
+    })
+
+    instance FromJson[CarrierZRateResponseJson] {
+        pub def fromJson(json: Json): Result[JsonError, CarrierZRateResponseJson] =
+            forM (
+                amount <- FromJson.decodeAtKey("amount", json);
+                serviceCode <- FromJson.decodeAtKey("serviceCode", json)
+            ) yield CarrierZRateResponseJson.CarrierZRateResponseJson({
+                amount = amount,
+                serviceCode = serviceCode
+            })
     }
 
     pub def runCarrierZApiClient(
-        action: Unit -> a \ CarrierZApiClient,
-        clientHandler: CarrierZRateRequest -> Result[CarrierZApiError, CarrierZRateResponse] \ IO
+        environment: CarrierZApiEnvironment,
+        action: Unit -> a \ CarrierZApiClient
     ): a \ IO = run { action() } with handler CarrierZApiClient {
-        def fetchRate(request, resume) = resume(clientHandler(request))
+        def fetchRate(request, resume) = resume(performFetchRate(environment, request))
     }
 
-    pub def carrierZApiClientHandler(
+    def performFetchRate(
         environment: CarrierZApiEnvironment,
         request: CarrierZRateRequest
     ): Result[CarrierZApiError, CarrierZRateResponse] \ IO =
-        match performCarrierZFetchRate(environment, request) {
-            case Ok(response) => Ok(response)
-            case Err(_) => Err(CarrierZApiError.CarrierZApiOperationFailed)
-        }
+        performCarrierZFetchRate(environment, request)
+            |> Result.mapErr(_ -> CarrierZApiError.CarrierZApiOperationFailed)
 
     def performCarrierZFetchRate(
         environment: CarrierZApiEnvironment,
         request: CarrierZRateRequest
     ): Result[DriverError, CarrierZRateResponse] \ IO =
-        let CarrierZApiEnvironment.CarrierZApiEnvironment(baseUrl) = environment;
-        let CarrierZRateRequest.CarrierZRateRequest(postalCode, weight) = request;
+        let CarrierZApiEnvironment.CarrierZApiEnvironment({ baseUrl = baseUrl }) = environment;
+        let CarrierZRateRequest.CarrierZRateRequest({
+            postalCode = postalCode,
+            weight = weight
+        }) = request;
         let body = Json.toCompactString(JObject(Map#{
             "postalCode" => JString(postalCode),
             "weight" => JNumber(Int32.toBigDecimal(weight))
         }));
-        match postJson("${baseUrl}/shipping/quote", body) {
-            case Ok(value) => decodeZ(value)
-            case Err(error) => Err(error)
-        }
+        postJson("${baseUrl}/shipping/quote", body)
+            |> Result.map(toCarrierZRateResponse)
 
-    def decodeZ(body: String): Result[DriverError, CarrierZRateResponse] = match Json.parse(body) {
-        case Ok(JObject(fields)) => match (Map.get("amount", fields), Map.get("serviceCode", fields)) {
-            case (Some(JNumber(amount)), Some(JString(serviceCode))) => match BigDecimal.tryToInt32(amount) {
-                case Some(value) => Ok(CarrierZRateResponse.CarrierZRateResponse(value, serviceCode))
-                case None => Err(DriverError.DriverOperationFailed)
-            }
-            case _ => Err(DriverError.DriverOperationFailed)
-        }
-        case _ => Err(DriverError.DriverOperationFailed)
-    }
+    def toCarrierZRateResponse(response: CarrierZRateResponseJson): CarrierZRateResponse =
+        let CarrierZRateResponseJson.CarrierZRateResponseJson({
+            amount = amount,
+            serviceCode = serviceCode
+        }) = response;
+        CarrierZRateResponse.CarrierZRateResponse({
+            amount = amount,
+            serviceCode = serviceCode
+        })
 }

@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
@@ -7,14 +9,20 @@ module Driver.UserApiClientDriver
   ) where
 
 import Control.Exception (try)
-import Data.Aeson (eitherDecode)
+import Data.Aeson (FromJSON, eitherDecode)
 import Data.Bifunctor (first)
 import Gateway.UserApiClient
+import GHC.Generics (Generic)
 import Network.HTTP.Simple
 import Network.HTTP.Types.Status (statusCode, statusIsSuccessful)
 import Polysemy (Embed, Member, Sem, embed, interpret)
 
 newtype UserApiEnvironment = UserApiEnvironment { baseUrl :: String }
+
+newtype UserResponseJson = UserResponseJson { postalCode :: String }
+  deriving (Generic)
+
+instance FromJSON UserResponseJson
 
 runUserApiClient
   :: Member (Embed IO) r
@@ -29,8 +37,9 @@ performFetchUser
   -> UserRequest
   -> IO (Either UserApiError UserResponse)
 performFetchUser environment request = do
+  let UserApiEnvironment environmentBaseUrl = environment
   attempted <- try @HttpException do
-    initial <- parseRequest $ baseUrl environment <> "/users/" <> userId request
+    initial <- parseRequest $ environmentBaseUrl <> "/users/" <> userId request
     httpLBS $ setRequestMethod "GET" initial
   pure case attempted of
     Left _ -> Left UserApiOperationFailed
@@ -39,4 +48,8 @@ performFetchUser environment request = do
       | not (statusIsSuccessful $ getResponseStatus response) -> Left UserApiOperationFailed
       | otherwise ->
           first (const UserApiOperationFailed)
-            $ eitherDecode (getResponseBody response)
+            $ toUserResponse <$> eitherDecode (getResponseBody response)
+
+toUserResponse :: UserResponseJson -> UserResponse
+toUserResponse (UserResponseJson responsePostalCode) =
+  UserResponse responsePostalCode

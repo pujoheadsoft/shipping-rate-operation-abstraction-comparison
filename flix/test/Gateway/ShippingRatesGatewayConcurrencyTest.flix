@@ -7,10 +7,31 @@ use Domain.Weight
 use Domain.Shipment
 use Domain.ShippingRate
 use Domain.ShippingRates
-use Gateway.CarrierXApiClient.{CarrierXApiError, CarrierXRateRequest, CarrierXRateResponse}
-use Gateway.CarrierYApiClient.{CarrierYApiError, CarrierYRateRequest, CarrierYRateResponse}
-use Gateway.CarrierZApiClient.{CarrierZApiError, CarrierZRateRequest, CarrierZRateResponse}
-use Gateway.ShippingRatesGateway.fetchShippingRates
+use Gateway.CarrierXApiClient.{CarrierXApiClient, CarrierXApiError, CarrierXRateRequest, CarrierXRateResponse}
+use Gateway.CarrierYApiClient.{CarrierYApiClient, CarrierYApiError, CarrierYRateRequest, CarrierYRateResponse}
+use Gateway.CarrierZApiClient.{CarrierZApiClient, CarrierZApiError, CarrierZRateRequest, CarrierZRateResponse}
+use Gateway.ShippingRatesGateway.{fetchShippingRatesConcurrently, fetchX, fetchY, fetchZ}
+
+def runConcurrencyTestX(
+    clientHandler: CarrierXRateRequest -> Result[CarrierXApiError, CarrierXRateResponse] \ IO,
+    action: Unit -> a \ CarrierXApiClient
+): a \ IO = run { action() } with handler CarrierXApiClient {
+    def fetchRate(request, resume) = resume(clientHandler(request))
+}
+
+def runConcurrencyTestY(
+    clientHandler: CarrierYRateRequest -> Result[CarrierYApiError, CarrierYRateResponse] \ IO,
+    action: Unit -> a \ CarrierYApiClient
+): a \ IO = run { action() } with handler CarrierYApiClient {
+    def fetchRate(request, resume) = resume(clientHandler(request))
+}
+
+def runConcurrencyTestZ(
+    clientHandler: CarrierZRateRequest -> Result[CarrierZApiError, CarrierZRateResponse] \ IO,
+    action: Unit -> a \ CarrierZApiClient
+): a \ IO = run { action() } with handler CarrierZApiClient {
+    def fetchRate(request, resume) = resume(clientHandler(request))
+}
 
 def gateX(
     started: JCountDownLatch,
@@ -19,7 +40,7 @@ def gateX(
 ): Result[CarrierXApiError, CarrierXRateResponse] \ IO = {
     started.countDown();
     discard release.await(5i64, JTimeUnit.SECONDS);
-    Ok(CarrierXRateResponse.CarrierXRateResponse(1, "EXPRESS"))
+    Ok(CarrierXRateResponse.CarrierXRateResponse({ amount = 1, serviceCode = "EXPRESS" }))
 }
 
 def gateY(
@@ -29,7 +50,7 @@ def gateY(
 ): Result[CarrierYApiError, CarrierYRateResponse] \ IO = {
     started.countDown();
     discard release.await(5i64, JTimeUnit.SECONDS);
-    Ok(CarrierYRateResponse.CarrierYRateResponse(2, "Standard Delivery"))
+    Ok(CarrierYRateResponse.CarrierYRateResponse({ price = 2, serviceName = "Standard Delivery" }))
 }
 
 def gateZ(
@@ -39,7 +60,7 @@ def gateZ(
 ): Result[CarrierZApiError, CarrierZRateResponse] \ IO = {
     started.countDown();
     discard release.await(5i64, JTimeUnit.SECONDS);
-    Ok(CarrierZRateResponse.CarrierZRateResponse(3, "ECONOMY"))
+    Ok(CarrierZRateResponse.CarrierZRateResponse({ amount = 3, serviceCode = "ECONOMY" }))
 }
 
 @Test
@@ -47,21 +68,25 @@ def gatewayConcurrencyTest(): Unit \ {Assert, Chan, NonDet, IO} =
     let started = new JCountDownLatch(3);
     let release = new JCountDownLatch(1);
     let overlapped = new JAtomicBoolean(false);
+    let shipment = Shipment({
+        destinationPostalCode = PostalCode("111-1111"),
+        weight = Weight(1000)
+    });
     region rc {
         spawn {
             overlapped.set(started.await(5i64, JTimeUnit.SECONDS));
             release.countDown()
         } @ rc;
-        let result = fetchShippingRates(
-            Shipment(PostalCode("111-1111"), Weight(1000)),
-            gateX(started, release),
-            gateY(started, release),
-            gateZ(started, release)
+        let result = fetchShippingRatesConcurrently(
+            () -> runConcurrencyTestX(gateX(started, release), () -> fetchX(shipment)),
+            () -> runConcurrencyTestY(gateY(started, release), () -> fetchY(shipment)),
+            () -> runConcurrencyTestZ(gateZ(started, release), () -> fetchZ(shipment))
         );
         Assert.assertEq(
             expected = Ok(ShippingRates(
-                ShippingRate("CarrierX", 1),
-                ShippingRate("CarrierY", 2) :: ShippingRate("CarrierZ", 3) :: Nil
+                ShippingRate({ carrier = "CarrierX", amount = 1 }),
+                ShippingRate({ carrier = "CarrierY", amount = 2 }) ::
+                    ShippingRate({ carrier = "CarrierZ", amount = 3 }) :: Nil
             )),
             result
         );

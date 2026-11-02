@@ -1,7 +1,5 @@
 module Gateway.CarrierZApiClient where
 
-import           Data.Aeson (FromJSON)
-import           GHC.Generics (Generic)
 import           Polysemy (makeSem)
 
 data CarrierZRateRequest = CarrierZRateRequest
@@ -12,9 +10,7 @@ data CarrierZRateRequest = CarrierZRateRequest
 data CarrierZRateResponse = CarrierZRateResponse
   { amount      :: Int
   , serviceCode :: String
-  } deriving (Eq, Generic, Show)
-
-instance FromJSON CarrierZRateResponse
+  } deriving (Eq, Show)
 
 data CarrierZApiError = CarrierZApiOperationFailed deriving (Eq, Show)
 

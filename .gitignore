@@ -20,7 +20,13 @@ haskell-effectful/.stack-work/
 haskell-effectful/shipping-rate-effectful.cabal
 flix/build/
 flix/artifact/
+flix/flix.jar
 koka/.koka/
+_opam/
+ocaml-eio-capabilities/_build/
+ocaml-eio-capabilities/*.install
+ocaml-eio-effects/_build/
+ocaml-eio-effects/*.install
 coverage/
 .cache/
 
@@ -40,6 +46,7 @@ coverage/
 .vscode/
 .idea/
 *.code-workspace
+!shipping-rate-operation-abstraction-comparison.code-workspace
 
 # Operating-system metadata
 .DS_Store

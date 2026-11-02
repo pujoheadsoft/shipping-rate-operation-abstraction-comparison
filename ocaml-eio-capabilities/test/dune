@@ -1,0 +1,3 @@
+(test
+ (name main)
+ (libraries shipping_rate_eio_capabilities alcotest eio.mock))

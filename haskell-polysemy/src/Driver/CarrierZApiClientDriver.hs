@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Driver.CarrierZApiClientDriver
@@ -10,6 +12,7 @@ import           Data.Bifunctor            (first)
 import           Driver.DriverError
 import           Driver.HttpClient         (postJson)
 import           Gateway.CarrierZApiClient
+import           GHC.Generics              (Generic)
 import           Polysemy
 import           Polysemy.Error            (Error, runError)
 import           Polysemy.Reader           (Reader, ask, runReader)
@@ -17,6 +20,13 @@ import           Polysemy.Reader           (Reader, ask, runReader)
 newtype CarrierZApiEnvironment = CarrierZApiEnvironment
   { baseUrl :: String
   }
+
+data CarrierZRateResponseJson = CarrierZRateResponseJson
+  { amount      :: Int
+  , serviceCode :: String
+  } deriving (Generic)
+
+instance FromJSON CarrierZRateResponseJson
 
 runCarrierZApiClient
   :: Member (Embed IO) r
@@ -39,14 +49,18 @@ performFetchRate
   => CarrierZRateRequest
   -> Sem r CarrierZRateResponse
 performFetchRate request = do
-  environment <- ask @CarrierZApiEnvironment
-  postJson
-    (baseUrl environment)
-    "/shipping/quote"
-    (encodeRateRequest request)
+  CarrierZApiEnvironment environmentBaseUrl <- ask
+  toCarrierZRateResponse <$> postJson
+      environmentBaseUrl
+      "/shipping/quote"
+      (encodeRateRequest request)
 
 encodeRateRequest :: CarrierZRateRequest -> Value
 encodeRateRequest request = object
   [ "postalCode" .= postalCode request
   , "weight" .= weight request
   ]
+
+toCarrierZRateResponse :: CarrierZRateResponseJson -> CarrierZRateResponse
+toCarrierZRateResponse (CarrierZRateResponseJson responseAmount responseServiceCode) =
+  CarrierZRateResponse responseAmount responseServiceCode

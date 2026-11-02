@@ -3,9 +3,9 @@
 ## 対応とバージョン
 
 - Flix 0.79.0、JDK 25.0.4
-- Domain、Carrier固有DTO、UseCase/Port、全3件返却、error mappingは既存版と同じ。
+- `UserId`と`Weight`からUser API経由で配送先を取得し、3社の送料から最安値を選ぶ。Domain、Carrier固有DTO、UseCase/Port、X/Y/Z順、error mappingは他実装と揃えている。
 - Carrier operationは `Request -> Result[CarrierXApiError, Response] \ CarrierXApiClient`。Portもlanguage-native effect。
-- 代数側の`handle...With`はCarrier effectを具体clientの`IO`へ変換する。本番の`runShippingRatePort`はGateway、本番の`runCarrier...`はDriverに置く。
+- PortとCarrierのmoduleはeffect契約を定義する。具体的なinterpreterは、本番の`runShippingRatePort`をGateway、本番の`runCarrier...`をDriverに置く。
 
 Gatewayは `Shipment -> Result[FetchShippingRatesError, ShippingRates] \ {CarrierXApiClient, CarrierYApiClient, CarrierZApiClient}`。各Driver clientは `Environment -> Request -> Result[CarrierX/Y/ZApiError, Response] \ IO` を返し、Carrier handlerがuser-defined effectを除去する。HTTP層の`DriverError`は各DriverでCarrier固有errorへ変換する。
 
@@ -15,7 +15,7 @@ Flixは未処理user-defined effectを`spawn`へ持ち込むことを禁止し�
 
 したがって順序はKoka/Kyoと異なり、各branchでCarrier handlerを先に適用して`IO`へ変換 → region内で`spawn` → Channelでjoin、となる。region終了前にchildは終了する。Carrier/Portの業務上の失敗は`Result`で表し、Gateway/UseCaseでそれぞれ上位errorへ写像する。
 
-実HTTPは標準`Net.Http` handlerを`IO`へ解釈し、各Carrier Driverがendpoint、JSON object encode、response decodeを所有する。HTTP/JSON型はGatewayへ出ない。
+実HTTPは標準`Net.Http` handlerを`IO`へ解釈し、各Carrier Driverがendpoint、JSON object encode、response decodeを所有する。`FromJson` instanceはDriver内の非公開wire DTOにだけ定義し、デコード後にJSON非依存のGateway型へ変換する。
 
 ## 評価
 

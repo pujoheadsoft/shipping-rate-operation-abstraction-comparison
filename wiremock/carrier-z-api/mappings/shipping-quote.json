@@ -1,0 +1,15 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPath": "/shipping/quote",
+    "bodyPatterns": [
+      { "matchesJsonPath": "$[?(@.postalCode == '111-1111')]" },
+      { "matchesJsonPath": "$[?(@.weight == 1000)]" }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": { "Content-Type": "application/json" },
+    "jsonBody": { "amount": 3000, "serviceCode": "ECONOMY" }
+  }
+}

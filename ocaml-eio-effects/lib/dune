@@ -1,0 +1,5 @@
+(include_subdirs qualified)
+
+(library
+ (name shipping_rate_eio_effects)
+ (libraries eio piaf yojson))

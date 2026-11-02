@@ -1,6 +1,8 @@
 module Main where
 
 import Prelude
+import Data.Either (Either(..))
+import Domain.ShippingRate (ShippingRate(..))
 import Domain.UserId (UserId(..))
 import Domain.Weight (Weight(..))
 import Driver.CarrierXApiClientDriver (runCarrierXApiClient)
@@ -18,7 +20,10 @@ import Run as Run
 import Run.Parallel (runParallel)
 import Gateway.ApplicationGateway (API_CLIENTS, runApplicationPorts)
 import Run.Except as RunExcept
-import UseCase.GetCheapestShippingRate (getCheapestShippingRate)
+import UseCase.GetCheapestShippingRate
+  ( GetCheapestShippingRateError(..)
+  , getCheapestShippingRate
+  )
 
 main :: Effect Unit
 main = do
@@ -41,7 +46,18 @@ main = do
         $ RunExcept.runExcept
         $ getCheapestShippingRate (UserId "user-123") (Weight 1000)
     result <- runParallel interpretApis program
-    liftEffect $ log $ show result
+    liftEffect case result of
+      Right rate -> do
+        log "一番安い送料の取得に成功しました。"
+        printShippingRate rate
+      Left ShippingDestinationNotFound ->
+        log "配送先が登録されていません。"
+      Left GetCheapestShippingRateFailed ->
+        log "一番安い送料の取得に失敗しました。"
+
+printShippingRate :: ShippingRate -> Effect Unit
+printShippingRate (ShippingRate rate) =
+  log $ "  " <> rate.carrier <> ": " <> show rate.amount <> "円"
 
 getEnv :: String -> String -> Effect String
 getEnv name defaultValue = fromMaybe defaultValue <$> lookupEnv name

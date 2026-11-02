@@ -1,7 +1,5 @@
 module Gateway.CarrierYApiClient where
 
-import           Data.Aeson (FromJSON)
-import           GHC.Generics (Generic)
 import           Polysemy (makeSem)
 
 data CarrierYRateRequest = CarrierYRateRequest
@@ -12,9 +10,7 @@ data CarrierYRateRequest = CarrierYRateRequest
 data CarrierYRateResponse = CarrierYRateResponse
   { price       :: Int
   , serviceName :: String
-  } deriving (Eq, Generic, Show)
-
-instance FromJSON CarrierYRateResponse
+  } deriving (Eq, Show)
 
 data CarrierYApiError = CarrierYApiOperationFailed deriving (Eq, Show)
 

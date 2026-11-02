@@ -1,0 +1,15 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPath": "/shipping-rates",
+    "bodyPatterns": [
+      { "matchesJsonPath": "$[?(@.destination == '111-1111')]" },
+      { "matchesJsonPath": "$[?(@.weightGrams == 1000)]" }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": { "Content-Type": "application/json" },
+    "jsonBody": { "amount": 1000, "serviceCode": "EXPRESS" }
+  }
+}

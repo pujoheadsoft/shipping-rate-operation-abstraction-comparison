@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Driver.CarrierYApiClientDriver
@@ -14,10 +16,18 @@ import           Effectful.Dispatch.Dynamic (interpret)
 import           Effectful.Error.Static     (Error, runErrorNoCallStack)
 import           Effectful.Reader.Static    (Reader, ask, runReader)
 import           Gateway.CarrierYApiClient
+import           GHC.Generics               (Generic)
 
 newtype CarrierYApiEnvironment = CarrierYApiEnvironment
   { baseUrl :: String
   }
+
+data CarrierYRateResponseJson = CarrierYRateResponseJson
+  { price       :: Int
+  , serviceName :: String
+  } deriving (Generic)
+
+instance FromJSON CarrierYRateResponseJson
 
 runCarrierYApiClient
   :: IOE :> es
@@ -39,14 +49,18 @@ performFetchRate
   => CarrierYRateRequest
   -> Eff es CarrierYRateResponse
 performFetchRate request = do
-  environment <- ask @CarrierYApiEnvironment
-  postJson
-    (baseUrl environment)
-    "/rates/quote"
-    (encodeRateRequest request)
+  CarrierYApiEnvironment environmentBaseUrl <- ask
+  toCarrierYRateResponse <$> postJson
+      environmentBaseUrl
+      "/rates/quote"
+      (encodeRateRequest request)
 
 encodeRateRequest :: CarrierYRateRequest -> Value
 encodeRateRequest request = object
   [ "postalCode" .= postalCode request
   , "weight" .= weight request
   ]
+
+toCarrierYRateResponse :: CarrierYRateResponseJson -> CarrierYRateResponse
+toCarrierYRateResponse (CarrierYRateResponseJson responsePrice responseServiceName) =
+  CarrierYRateResponse responsePrice responseServiceName

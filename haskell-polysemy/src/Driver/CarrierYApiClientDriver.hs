@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Driver.CarrierYApiClientDriver
@@ -10,6 +12,7 @@ import           Data.Bifunctor            (first)
 import           Driver.DriverError
 import           Driver.HttpClient         (postJson)
 import           Gateway.CarrierYApiClient
+import           GHC.Generics              (Generic)
 import           Polysemy
 import           Polysemy.Error            (Error, runError)
 import           Polysemy.Reader           (Reader, ask, runReader)
@@ -17,6 +20,13 @@ import           Polysemy.Reader           (Reader, ask, runReader)
 newtype CarrierYApiEnvironment = CarrierYApiEnvironment
   { baseUrl :: String
   }
+
+data CarrierYRateResponseJson = CarrierYRateResponseJson
+  { price       :: Int
+  , serviceName :: String
+  } deriving (Generic)
+
+instance FromJSON CarrierYRateResponseJson
 
 runCarrierYApiClient
   :: Member (Embed IO) r
@@ -39,14 +49,18 @@ performFetchRate
   => CarrierYRateRequest
   -> Sem r CarrierYRateResponse
 performFetchRate request = do
-  environment <- ask @CarrierYApiEnvironment
-  postJson
-    (baseUrl environment)
-    "/rates/quote"
-    (encodeRateRequest request)
+  CarrierYApiEnvironment environmentBaseUrl <- ask
+  toCarrierYRateResponse <$> postJson
+      environmentBaseUrl
+      "/rates/quote"
+      (encodeRateRequest request)
 
 encodeRateRequest :: CarrierYRateRequest -> Value
 encodeRateRequest request = object
   [ "postalCode" .= postalCode request
   , "weight" .= weight request
   ]
+
+toCarrierYRateResponse :: CarrierYRateResponseJson -> CarrierYRateResponse
+toCarrierYRateResponse (CarrierYRateResponseJson responsePrice responseServiceName) =
+  CarrierYRateResponse responsePrice responseServiceName

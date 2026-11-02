@@ -8,6 +8,7 @@ export class HttpClient extends Context.Service<
   HttpClient,
   {
     readonly post: (url: string, body: string) => Effect.Effect<string, HttpRequestFailed>;
+    readonly get: (url: string) => Effect.Effect<Readonly<{ status: number; body: string }>, HttpRequestFailed>;
   }
 >()("rates/driver/HttpClient") {}
 
@@ -30,6 +31,16 @@ export const fetchPost = (url: string, body: string): Effect.Effect<string, Http
     catch: () => new HttpRequestFailed(),
   });
 
+export const fetchGet = (url: string): Effect.Effect<Readonly<{ status: number; body: string }>, HttpRequestFailed> =>
+  Effect.tryPromise({
+    try: async (signal) => {
+      const response = await fetch(url, { signal });
+      return { status: response.status, body: await response.text() };
+    },
+    catch: () => new HttpRequestFailed(),
+  });
+
 export const HttpClientLive: Layer.Layer<HttpClient, never, never> = Layer.succeed(HttpClient, {
   post: fetchPost,
+  get: fetchGet,
 });

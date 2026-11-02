@@ -3,51 +3,65 @@ pub mod Driver.CarrierXApiClientDriver {
     use Driver.HttpClient.postJson
     use Gateway.CarrierXApiClient.{CarrierXApiClient, CarrierXApiError, CarrierXRateRequest, CarrierXRateResponse}
     use Util.Json
+    use Util.Json.FromJson
     use Util.Json.Json.{JNumber, JObject, JString}
+    use Util.Json.JsonError
 
-    pub enum CarrierXApiEnvironment {
-        case CarrierXApiEnvironment(String)
+    pub enum CarrierXApiEnvironment({ baseUrl = String })
+
+    enum CarrierXRateResponseJson({
+        amount = Int32,
+        serviceCode = String
+    })
+
+    instance FromJson[CarrierXRateResponseJson] {
+        pub def fromJson(json: Json): Result[JsonError, CarrierXRateResponseJson] =
+            forM (
+                amount <- FromJson.decodeAtKey("amount", json);
+                serviceCode <- FromJson.decodeAtKey("serviceCode", json)
+            ) yield CarrierXRateResponseJson.CarrierXRateResponseJson({
+                amount = amount,
+                serviceCode = serviceCode
+            })
     }
 
     pub def runCarrierXApiClient(
-        action: Unit -> a \ CarrierXApiClient,
-        clientHandler: CarrierXRateRequest -> Result[CarrierXApiError, CarrierXRateResponse] \ IO
+        environment: CarrierXApiEnvironment,
+        action: Unit -> a \ CarrierXApiClient
     ): a \ IO = run { action() } with handler CarrierXApiClient {
-        def fetchRate(request, resume) = resume(clientHandler(request))
+        def fetchRate(request, resume) = resume(performFetchRate(environment, request))
     }
 
-    pub def carrierXApiClientHandler(
+    def performFetchRate(
         environment: CarrierXApiEnvironment,
         request: CarrierXRateRequest
     ): Result[CarrierXApiError, CarrierXRateResponse] \ IO =
-        match performCarrierXFetchRate(environment, request) {
-            case Ok(response) => Ok(response)
-            case Err(_) => Err(CarrierXApiError.CarrierXApiOperationFailed)
-        }
+        performCarrierXFetchRate(environment, request)
+            |> Result.mapErr(_ -> CarrierXApiError.CarrierXApiOperationFailed)
 
     def performCarrierXFetchRate(
         environment: CarrierXApiEnvironment,
         request: CarrierXRateRequest
     ): Result[DriverError, CarrierXRateResponse] \ IO =
-        let CarrierXApiEnvironment.CarrierXApiEnvironment(baseUrl) = environment;
-        let CarrierXRateRequest.CarrierXRateRequest(destination, weightGrams) = request;
+        let CarrierXApiEnvironment.CarrierXApiEnvironment({ baseUrl = baseUrl }) = environment;
+        let CarrierXRateRequest.CarrierXRateRequest({
+            destination = destination,
+            weightGrams = weightGrams
+        }) = request;
         let body = Json.toCompactString(JObject(Map#{
             "destination" => JString(destination),
             "weightGrams" => JNumber(Int32.toBigDecimal(weightGrams))
         }));
-        match postJson("${baseUrl}/shipping-rates", body) {
-            case Ok(value) => decodeX(value)
-            case Err(error) => Err(error)
-        }
+        postJson("${baseUrl}/shipping-rates", body)
+            |> Result.map(toCarrierXRateResponse)
 
-    def decodeX(body: String): Result[DriverError, CarrierXRateResponse] = match Json.parse(body) {
-        case Ok(JObject(fields)) => match (Map.get("amount", fields), Map.get("serviceCode", fields)) {
-            case (Some(JNumber(amount)), Some(JString(serviceCode))) => match BigDecimal.tryToInt32(amount) {
-                case Some(value) => Ok(CarrierXRateResponse.CarrierXRateResponse(value, serviceCode))
-                case None => Err(DriverError.DriverOperationFailed)
-            }
-            case _ => Err(DriverError.DriverOperationFailed)
-        }
-        case _ => Err(DriverError.DriverOperationFailed)
-    }
+    def toCarrierXRateResponse(response: CarrierXRateResponseJson): CarrierXRateResponse =
+        let CarrierXRateResponseJson.CarrierXRateResponseJson({
+            amount = amount,
+            serviceCode = serviceCode
+        }) = response;
+        CarrierXRateResponse.CarrierXRateResponse({
+            amount = amount,
+            serviceCode = serviceCode
+        })
 }

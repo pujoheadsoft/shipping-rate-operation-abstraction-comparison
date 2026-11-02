@@ -1,0 +1,15 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPath": "/rates/quote",
+    "bodyPatterns": [
+      { "matchesJsonPath": "$[?(@.postalCode == '111-1111')]" },
+      { "matchesJsonPath": "$[?(@.weight == 1000)]" }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": { "Content-Type": "application/json" },
+    "jsonBody": { "price": 2000, "serviceName": "Standard Delivery" }
+  }
+}

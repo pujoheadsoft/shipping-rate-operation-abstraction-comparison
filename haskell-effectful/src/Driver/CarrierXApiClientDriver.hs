@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Driver.CarrierXApiClientDriver
@@ -14,10 +16,18 @@ import           Effectful.Dispatch.Dynamic (interpret)
 import           Effectful.Error.Static     (Error, runErrorNoCallStack)
 import           Effectful.Reader.Static    (Reader, ask, runReader)
 import           Gateway.CarrierXApiClient
+import           GHC.Generics               (Generic)
 
 newtype CarrierXApiEnvironment = CarrierXApiEnvironment
   { baseUrl :: String
   }
+
+data CarrierXRateResponseJson = CarrierXRateResponseJson
+  { amount      :: Int
+  , serviceCode :: String
+  } deriving (Generic)
+
+instance FromJSON CarrierXRateResponseJson
 
 runCarrierXApiClient
   :: IOE :> es
@@ -39,14 +49,18 @@ performFetchRate
   => CarrierXRateRequest
   -> Eff es CarrierXRateResponse
 performFetchRate request = do
-  environment <- ask @CarrierXApiEnvironment
-  postJson
-    (baseUrl environment)
-    "/shipping-rates"
-    (encodeRateRequest request)
+  CarrierXApiEnvironment environmentBaseUrl <- ask
+  toCarrierXRateResponse <$> postJson
+      environmentBaseUrl
+      "/shipping-rates"
+      (encodeRateRequest request)
 
 encodeRateRequest :: CarrierXRateRequest -> Value
 encodeRateRequest request = object
   [ "destination" .= destination request
   , "weightGrams" .= weightGrams request
   ]
+
+toCarrierXRateResponse :: CarrierXRateResponseJson -> CarrierXRateResponse
+toCarrierXRateResponse (CarrierXRateResponseJson responseAmount responseServiceCode) =
+  CarrierXRateResponse responseAmount responseServiceCode

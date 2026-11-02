@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Driver.CarrierZApiClientDriver
@@ -14,10 +16,18 @@ import           Effectful.Dispatch.Dynamic (interpret)
 import           Effectful.Error.Static     (Error, runErrorNoCallStack)
 import           Effectful.Reader.Static    (Reader, ask, runReader)
 import           Gateway.CarrierZApiClient
+import           GHC.Generics               (Generic)
 
 newtype CarrierZApiEnvironment = CarrierZApiEnvironment
   { baseUrl :: String
   }
+
+data CarrierZRateResponseJson = CarrierZRateResponseJson
+  { amount      :: Int
+  , serviceCode :: String
+  } deriving (Generic)
+
+instance FromJSON CarrierZRateResponseJson
 
 runCarrierZApiClient
   :: IOE :> es
@@ -39,14 +49,18 @@ performFetchRate
   => CarrierZRateRequest
   -> Eff es CarrierZRateResponse
 performFetchRate request = do
-  environment <- ask @CarrierZApiEnvironment
-  postJson
-    (baseUrl environment)
-    "/shipping/quote"
-    (encodeRateRequest request)
+  CarrierZApiEnvironment environmentBaseUrl <- ask
+  toCarrierZRateResponse <$> postJson
+      environmentBaseUrl
+      "/shipping/quote"
+      (encodeRateRequest request)
 
 encodeRateRequest :: CarrierZRateRequest -> Value
 encodeRateRequest request = object
   [ "postalCode" .= postalCode request
   , "weight" .= weight request
   ]
+
+toCarrierZRateResponse :: CarrierZRateResponseJson -> CarrierZRateResponse
+toCarrierZRateResponse (CarrierZRateResponseJson responseAmount responseServiceCode) =
+  CarrierZRateResponse responseAmount responseServiceCode

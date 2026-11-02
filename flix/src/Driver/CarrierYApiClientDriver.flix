@@ -3,51 +3,65 @@ pub mod Driver.CarrierYApiClientDriver {
     use Driver.HttpClient.postJson
     use Gateway.CarrierYApiClient.{CarrierYApiClient, CarrierYApiError, CarrierYRateRequest, CarrierYRateResponse}
     use Util.Json
+    use Util.Json.FromJson
     use Util.Json.Json.{JNumber, JObject, JString}
+    use Util.Json.JsonError
 
-    pub enum CarrierYApiEnvironment {
-        case CarrierYApiEnvironment(String)
+    pub enum CarrierYApiEnvironment({ baseUrl = String })
+
+    enum CarrierYRateResponseJson({
+        price = Int32,
+        serviceName = String
+    })
+
+    instance FromJson[CarrierYRateResponseJson] {
+        pub def fromJson(json: Json): Result[JsonError, CarrierYRateResponseJson] =
+            forM (
+                price <- FromJson.decodeAtKey("price", json);
+                serviceName <- FromJson.decodeAtKey("serviceName", json)
+            ) yield CarrierYRateResponseJson.CarrierYRateResponseJson({
+                price = price,
+                serviceName = serviceName
+            })
     }
 
     pub def runCarrierYApiClient(
-        action: Unit -> a \ CarrierYApiClient,
-        clientHandler: CarrierYRateRequest -> Result[CarrierYApiError, CarrierYRateResponse] \ IO
+        environment: CarrierYApiEnvironment,
+        action: Unit -> a \ CarrierYApiClient
     ): a \ IO = run { action() } with handler CarrierYApiClient {
-        def fetchRate(request, resume) = resume(clientHandler(request))
+        def fetchRate(request, resume) = resume(performFetchRate(environment, request))
     }
 
-    pub def carrierYApiClientHandler(
+    def performFetchRate(
         environment: CarrierYApiEnvironment,
         request: CarrierYRateRequest
     ): Result[CarrierYApiError, CarrierYRateResponse] \ IO =
-        match performCarrierYFetchRate(environment, request) {
-            case Ok(response) => Ok(response)
-            case Err(_) => Err(CarrierYApiError.CarrierYApiOperationFailed)
-        }
+        performCarrierYFetchRate(environment, request)
+            |> Result.mapErr(_ -> CarrierYApiError.CarrierYApiOperationFailed)
 
     def performCarrierYFetchRate(
         environment: CarrierYApiEnvironment,
         request: CarrierYRateRequest
     ): Result[DriverError, CarrierYRateResponse] \ IO =
-        let CarrierYApiEnvironment.CarrierYApiEnvironment(baseUrl) = environment;
-        let CarrierYRateRequest.CarrierYRateRequest(postalCode, weight) = request;
+        let CarrierYApiEnvironment.CarrierYApiEnvironment({ baseUrl = baseUrl }) = environment;
+        let CarrierYRateRequest.CarrierYRateRequest({
+            postalCode = postalCode,
+            weight = weight
+        }) = request;
         let body = Json.toCompactString(JObject(Map#{
             "postalCode" => JString(postalCode),
             "weight" => JNumber(Int32.toBigDecimal(weight))
         }));
-        match postJson("${baseUrl}/rates/quote", body) {
-            case Ok(value) => decodeY(value)
-            case Err(error) => Err(error)
-        }
+        postJson("${baseUrl}/rates/quote", body)
+            |> Result.map(toCarrierYRateResponse)
 
-    def decodeY(body: String): Result[DriverError, CarrierYRateResponse] = match Json.parse(body) {
-        case Ok(JObject(fields)) => match (Map.get("price", fields), Map.get("serviceName", fields)) {
-            case (Some(JNumber(price)), Some(JString(serviceName))) => match BigDecimal.tryToInt32(price) {
-                case Some(value) => Ok(CarrierYRateResponse.CarrierYRateResponse(value, serviceName))
-                case None => Err(DriverError.DriverOperationFailed)
-            }
-            case _ => Err(DriverError.DriverOperationFailed)
-        }
-        case _ => Err(DriverError.DriverOperationFailed)
-    }
+    def toCarrierYRateResponse(response: CarrierYRateResponseJson): CarrierYRateResponse =
+        let CarrierYRateResponseJson.CarrierYRateResponseJson({
+            price = price,
+            serviceName = serviceName
+        }) = response;
+        CarrierYRateResponse.CarrierYRateResponse({
+            price = price,
+            serviceName = serviceName
+        })
 }

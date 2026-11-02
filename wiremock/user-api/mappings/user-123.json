@@ -1,0 +1,8 @@
+{
+  "request": { "method": "GET", "urlPath": "/users/user-123" },
+  "response": {
+    "status": 200,
+    "headers": { "Content-Type": "application/json" },
+    "jsonBody": { "postalCode": "111-1111" }
+  }
+}
